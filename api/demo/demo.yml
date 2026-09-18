@@ -1,0 +1,27 @@
+get:
+  tags: [demo]
+  operationId: getDemo
+  summary: Get demo message
+
+  parameters:
+    - name: error
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+
+  responses:
+    '200':
+      description: Successful response
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/api-response-string.yml'
+
+    '500':
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/error-response.yml'

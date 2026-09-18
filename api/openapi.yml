@@ -1,0 +1,12 @@
+openapi: 3.0.3
+
+info:
+  title: Demo
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/demo:
+    $ref: './demo/demo.yml'
