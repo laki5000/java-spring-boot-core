@@ -1,0 +1,33 @@
+name: Integration Tests
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  integration-tests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'corretto'
+          cache: maven
+
+      - name: Download build output
+        uses: actions/download-artifact@v5
+        with:
+          name: backend-build
+          path: backend/target
+
+      - name: Run integration tests
+        working-directory: backend
+        run: mvn surefire:test -Pintegration-tests
