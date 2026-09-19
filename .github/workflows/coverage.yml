@@ -38,16 +38,7 @@ jobs:
 
       - name: Merge JaCoCo execution data
         working-directory: backend
-        run: |
-          mvn dependency:get \
-            -Dartifact=org.jacoco:org.jacoco.cli:0.8.15:jar:nodeps \
-            -Dtransitive=false
-
-          java -jar ~/.m2/repository/org/jacoco/org.jacoco.cli/0.8.15/org.jacoco.cli-0.8.15-nodeps.jar \
-            merge \
-            target/coverage/unit/jacoco.exec \
-            target/coverage/integration/jacoco.exec \
-            --destfile target/jacoco-merged.exec
+        run: mvn jacoco:merge@merge
 
       - name: Generate JaCoCo report
         working-directory: backend
