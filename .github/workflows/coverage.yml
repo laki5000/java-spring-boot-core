@@ -41,7 +41,7 @@ jobs:
         run: |
           mvn jacoco:merge \
             -Djacoco.destFile=target/jacoco-merged.exec \
-            -Djacoco.dataFiles=target/coverage/unit/jacoco.exec,target/coverage/integration/jacoco.exec
+            -Djacoco.fileSets=target/coverage/unit,target/coverage/integration
 
       - name: Generate JaCoCo report
         working-directory: backend
