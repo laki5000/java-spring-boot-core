@@ -1,19 +1,11 @@
-name: Integration Tests
+name: Unit Tests
 
 on:
-  workflow_run:
-    workflows:
-      - Build
-    types:
-      - completed
+  workflow_call:
 
 jobs:
-  integration-tests:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  unit-tests:
     runs-on: ubuntu-latest
-
-    permissions:
-      actions: read
 
     steps:
       - name: Checkout repository
@@ -30,10 +22,8 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: backend-build
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
           path: backend/target
 
-      - name: Run integration tests
+      - name: Run unit tests
         working-directory: backend
-        run: mvn surefire:test -Pintegration-tests
+        run: mvn surefire:test -Punit-tests
