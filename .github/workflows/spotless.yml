@@ -20,4 +20,5 @@ jobs:
           cache: maven
 
       - name: Run Spotless
+        working-directory: backend
         run: mvn spotless:check
