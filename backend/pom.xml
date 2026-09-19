@@ -161,14 +161,6 @@
 						<exclude>com/example/Application.class</exclude>
 					</excludes>
 				</configuration>
-
-				<executions>
-					<execution>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>
