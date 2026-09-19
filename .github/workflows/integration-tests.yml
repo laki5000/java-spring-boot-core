@@ -2,7 +2,8 @@ name: Integration Tests
 
 on:
   workflow_run:
-    workflows: ["Build"]
+    workflows:
+      - Build
     types:
       - completed
 
@@ -10,6 +11,9 @@ jobs:
   integration-tests:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
 
     steps:
       - name: Checkout repository
@@ -26,6 +30,8 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: backend-build
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
           path: backend/target
 
       - name: Run integration tests
