@@ -55,4 +55,10 @@ jobs:
 
       - name: Check coverage
         working-directory: backend
-        run: mvn jacoco:check
+        run: |
+          mvn jacoco:check \
+            -Djacoco.dataFile=target/jacoco-merged.exec \
+            -Djacoco.rules.rule.element=BUNDLE \
+            -Djacoco.rules.rule.limits.limit.counter=INSTRUCTION \
+            -Djacoco.rules.rule.limits.limit.value=COVEREDRATIO \
+            -Djacoco.rules.rule.limits.limit.minimum=0.90
