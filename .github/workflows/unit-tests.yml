@@ -27,3 +27,9 @@ jobs:
       - name: Run unit tests
         working-directory: backend
         run: mvn surefire:test -Punit-tests
+
+      - name: Upload JaCoCo execution data
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-jacoco
+          path: backend/target/jacoco.exec

@@ -1,0 +1,56 @@
+name: Coverage
+
+on:
+  workflow_call:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'corretto'
+          cache: maven
+
+      - name: Download build output
+        uses: actions/download-artifact@v5
+        with:
+          name: backend-build
+          path: backend/target
+
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v5
+        with:
+          name: unit-test-jacoco
+          path: backend/target/coverage/unit
+
+      - name: Download integration test coverage
+        uses: actions/download-artifact@v5
+        with:
+          name: integration-test-jacoco
+          path: backend/target/coverage/integration
+
+      - name: Merge JaCoCo execution data
+        working-directory: backend
+        run: |
+          mvn jacoco:merge \
+            -Djacoco.destFile=target/jacoco-merged.exec \
+            -Djacoco.dataFiles=target/coverage/unit/jacoco.exec,target/coverage/integration/jacoco.exec
+
+      - name: Generate JaCoCo report
+        working-directory: backend
+        run: |
+          mvn jacoco:report \
+            -Djacoco.dataFile=target/jacoco-merged.exec
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/target/site/jacoco
