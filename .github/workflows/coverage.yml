@@ -55,23 +55,4 @@ jobs:
 
       - name: Check coverage
         working-directory: backend
-        run: |
-          python3 - <<'PY'
-          import xml.etree.ElementTree as ET
-
-          report = ET.parse("target/site/jacoco/jacoco.xml")
-          counter = next(
-              counter
-              for counter in report.getroot().findall("counter")
-              if counter.attrib["type"] == "INSTRUCTION"
-          )
-
-          missed = int(counter.attrib["missed"])
-          covered = int(counter.attrib["covered"])
-          ratio = covered / (missed + covered)
-
-          print(f"Instruction coverage: {ratio:.2%}")
-
-          if ratio < 0.90:
-              raise SystemExit("Coverage is below 90%")
-          PY
+        run: mvn jacoco:check@check
