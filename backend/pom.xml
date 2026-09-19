@@ -164,30 +164,6 @@
 
 				<executions>
 					<execution>
-						<id>merge</id>
-						<goals>
-							<goal>merge</goal>
-						</goals>
-						<configuration>
-							<fileSets>
-								<fileSet>
-									<directory>${project.build.directory}/coverage/unit</directory>
-									<includes>
-										<include>jacoco.exec</include>
-									</includes>
-								</fileSet>
-								<fileSet>
-									<directory>${project.build.directory}/coverage/integration</directory>
-									<includes>
-										<include>jacoco.exec</include>
-									</includes>
-								</fileSet>
-							</fileSets>
-							<destFile>${project.build.directory}/jacoco-merged.exec</destFile>
-						</configuration>
-					</execution>
-
-					<execution>
 						<id>check</id>
 						<goals>
 							<goal>check</goal>

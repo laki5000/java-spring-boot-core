@@ -38,18 +38,21 @@ jobs:
 
       - name: Merge JaCoCo execution data
         working-directory: backend
-        run: mvn jacoco:merge
+        run: |
+          mvn dependency:get \
+            -Dartifact=org.jacoco:org.jacoco.cli:0.8.15:jar:nodeps \
+            -Dtransitive=false
+
+          java -jar ~/.m2/repository/org/jacoco/org.jacoco.cli/0.8.15/org.jacoco.cli-0.8.15-nodeps.jar \
+            merge \
+            target/coverage/unit/jacoco.exec \
+            target/coverage/integration/jacoco.exec \
+            --destfile target/jacoco-merged.exec
 
       - name: Generate JaCoCo report
         working-directory: backend
-        run: mvn jacoco:report
+        run: mvn jacoco:report -Djacoco.dataFile=target/jacoco-merged.exec
 
       - name: Check coverage
         working-directory: backend
         run: mvn jacoco:check
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-report
-          path: backend/target/site/jacoco
