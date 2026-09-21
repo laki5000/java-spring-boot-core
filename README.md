@@ -81,6 +81,7 @@ The `core` area provides common functionality that can be reused across projects
 * **Global Exception Handling** - centralizes exception handling and provides a consistent API error response.
 * **Internationalization (i18n)** - provides localized messages with configurable locale handling.
 * **Aspect-Oriented Logging** - provides annotation-based method execution logging with configurable log levels, arguments, and results.
+* **HTTP Request Logging** - logs incoming HTTP requests with their method, URI, response status, and execution time.
 
 ---
 
