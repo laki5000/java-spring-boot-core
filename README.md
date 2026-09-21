@@ -74,6 +74,16 @@ The `backend` directory contains the Spring Boot application. The three director
 
 ---
 
+## Core Functionality
+
+The `core` area provides common functionality that can be reused across projects:
+
+* **Global Exception Handling** - centralizes exception handling and provides a consistent API error response.
+* **Internationalization (i18n)** - provides localized messages with configurable locale handling.
+* **Aspect-Oriented Logging** - provides annotation-based method execution logging with configurable log levels, arguments, and results.
+
+---
+
 # Technology Stack
 
 The project currently uses:
