@@ -46,21 +46,21 @@ public class LoggingAspect {
   }
 
   private String buildSuccessMessage(
-          LogExecution annotation,
-          String className,
-          String methodName,
-          Object[] arguments,
-          Object result,
-          long duration) {
+      LogExecution annotation,
+      String className,
+      String methodName,
+      Object[] arguments,
+      Object result,
+      long duration) {
 
     StringBuilder message =
-            new StringBuilder()
-                    .append(className)
-                    .append(".")
-                    .append(methodName)
-                    .append(" completed in ")
-                    .append(duration)
-                    .append(" ms");
+        new StringBuilder()
+            .append(className)
+            .append(".")
+            .append(methodName)
+            .append(" completed in ")
+            .append(duration)
+            .append(" ms");
 
     if (annotation.logArguments()) {
       message.append(" | arguments=").append(getArgumentsToLog(annotation, arguments));
@@ -81,10 +81,10 @@ public class LoggingAspect {
     }
 
     return Arrays.stream(indexes)
-            .filter(index -> index >= 0 && index < arguments.length)
-            .mapToObj(index -> arguments[index])
-            .toList()
-            .toString();
+        .filter(index -> index >= 0 && index < arguments.length)
+        .mapToObj(index -> arguments[index])
+        .toList()
+        .toString();
   }
 
   private void log(Level level, String message) {

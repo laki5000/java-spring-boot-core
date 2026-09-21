@@ -68,8 +68,8 @@ class LoggingAspectUnitTests {
 
     // When / Then
     RuntimeException actualException =
-            assertThrows(
-                    RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
+        assertThrows(
+            RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
 
     assertEquals(expectedException, actualException);
     verify(joinPoint).proceed();
@@ -77,7 +77,7 @@ class LoggingAspectUnitTests {
 
   @Test
   void testLogExecution_shouldLogAllArguments_whenArgumentLoggingIsEnabledAndIndexesAreEmpty()
-          throws Throwable {
+      throws Throwable {
     // Given
     Object[] arguments = {ARGUMENT_1, ARGUMENT_2, ARGUMENT_3};
 
@@ -97,7 +97,8 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldLogSelectedArguments_whenArgumentLoggingIsEnabledAndIndexesAreProvided()
+  void
+      testLogExecution_shouldLogSelectedArguments_whenArgumentLoggingIsEnabledAndIndexesAreProvided()
           throws Throwable {
     // Given
     Object[] arguments = {ARGUMENT_1, ARGUMENT_2, ARGUMENT_3};
@@ -119,7 +120,7 @@ class LoggingAspectUnitTests {
 
   @Test
   void testLogExecution_shouldIgnoreArgumentIndexes_whenArgumentLoggingIsDisabled()
-          throws Throwable {
+      throws Throwable {
     // Given
     Object[] arguments = {ARGUMENT_1, ARGUMENT_2, ARGUMENT_3};
 
