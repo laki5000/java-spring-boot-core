@@ -14,5 +14,7 @@ public @interface LogExecution {
 
   boolean logArguments() default false;
 
+  int[] argumentIndexes() default {};
+
   boolean logResult() default false;
 }
