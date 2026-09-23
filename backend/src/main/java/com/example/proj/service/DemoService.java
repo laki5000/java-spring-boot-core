@@ -11,14 +11,13 @@ import org.springframework.stereotype.Service;
 public class DemoService {
 
   private static final String DEMO_RUNNING_MESSAGE = "demo.running";
-  private static final String DEMO_EXAMPLE_EXCEPTION_MESSAGE = "demo.example.exception";
 
   private final I18nService i18nService;
 
   @LogExecution(level = Level.INFO, logArguments = true, logResult = true)
   public String getDemoMessage(Boolean error) {
     if (Boolean.TRUE.equals(error)) {
-      throw new RuntimeException(i18nService.getMessage(DEMO_EXAMPLE_EXCEPTION_MESSAGE));
+      throw new RuntimeException("Example exception");
     }
 
     return i18nService.getMessage(DEMO_RUNNING_MESSAGE);

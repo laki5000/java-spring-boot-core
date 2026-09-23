@@ -16,10 +16,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class LoggingAspect {
 
+  private static final String STARTED = " started";
   private static final String COMPLETED_IN = " completed in ";
   private static final String MILLISECONDS_SUFFIX = " ms";
   private static final String ARGUMENTS_PREFIX = " | arguments=";
   private static final String RESULT_PREFIX = " | result=";
+  private static final String REDACTED = "[REDACTED]";
 
   @Around("@annotation(logExecution)")
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
@@ -28,57 +30,47 @@ public class LoggingAspect {
     String className = joinPoint.getTarget().getClass().getSimpleName();
     String methodName = joinPoint.getSignature().getName();
 
+    logStarted(logExecution, className, methodName, joinPoint);
+
     long start = System.currentTimeMillis();
 
     Object result = joinPoint.proceed();
 
     long duration = System.currentTimeMillis() - start;
 
-    logSuccess(logExecution, className, methodName, joinPoint, result, duration);
+    logCompleted(logExecution, className, methodName, result, duration);
 
     return result;
   }
 
-  private void logSuccess(
-      LogExecution annotation,
-      String className,
-      String methodName,
-      ProceedingJoinPoint joinPoint,
-      Object result,
-      long duration) {
+  private void logStarted(
+      LogExecution annotation, String className, String methodName, ProceedingJoinPoint joinPoint) {
 
     String message =
-        buildSuccessMessage(annotation, className, methodName, joinPoint, result, duration);
+        className
+            + "."
+            + methodName
+            + STARTED
+            + (annotation.logArguments()
+                ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, annotation)
+                : "");
 
     log(annotation.level(), message);
   }
 
-  private String buildSuccessMessage(
-      LogExecution annotation,
-      String className,
-      String methodName,
-      ProceedingJoinPoint joinPoint,
-      Object result,
-      long duration) {
+  private void logCompleted(
+      LogExecution annotation, String className, String methodName, Object result, long duration) {
 
-    StringBuilder message =
-        new StringBuilder()
-            .append(className)
-            .append(".")
-            .append(methodName)
-            .append(COMPLETED_IN)
-            .append(duration)
-            .append(MILLISECONDS_SUFFIX);
+    String message =
+        className
+            + "."
+            + methodName
+            + COMPLETED_IN
+            + duration
+            + MILLISECONDS_SUFFIX
+            + (annotation.logResult() ? RESULT_PREFIX + result : "");
 
-    if (annotation.logArguments()) {
-      message.append(ARGUMENTS_PREFIX).append(getArgumentsToLog(joinPoint, annotation));
-    }
-
-    if (annotation.logResult()) {
-      message.append(RESULT_PREFIX).append(result);
-    }
-
-    return message.toString();
+    log(annotation.level(), message);
   }
 
   private String getArgumentsToLog(ProceedingJoinPoint joinPoint, LogExecution annotation) {
@@ -87,15 +79,16 @@ public class LoggingAspect {
 
     int[] indexes = annotation.argumentIndexes();
 
-    if (indexes.length == 0) {
-      return IntStream.range(0, arguments.length)
-          .mapToObj(index -> formatArgument(index, parameterNames[index], arguments[index]))
-          .collect(Collectors.joining(", ", "{", "}"));
-    }
+    return IntStream.range(0, arguments.length)
+        .mapToObj(
+            index -> {
+              boolean shouldLogValue =
+                  indexes.length == 0 || Arrays.stream(indexes).anyMatch(i -> i == index);
 
-    return Arrays.stream(indexes)
-        .filter(index -> index >= 0 && index < arguments.length)
-        .mapToObj(index -> formatArgument(index, parameterNames[index], arguments[index]))
+              Object value = shouldLogValue ? arguments[index] : REDACTED;
+
+              return formatArgument(index, parameterNames[index], value);
+            })
         .collect(Collectors.joining(", ", "{", "}"));
   }
 
