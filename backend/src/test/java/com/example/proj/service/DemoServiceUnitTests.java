@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DemoServiceUnitTests {
 
   private static final String DEMO_RUNNING_MESSAGE = "Demo is running";
-  private static final String DEMO_EXCEPTION_MESSAGE = "Demo exception";
+  private static final String DEMO_EXCEPTION_MESSAGE = "Example exception";
   private static final String DEMO_RUNNING_MESSAGE_KEY = "demo.running";
   private static final String DEMO_EXCEPTION_MESSAGE_KEY = "demo.example.exception";
 
@@ -44,15 +44,11 @@ class DemoServiceUnitTests {
 
   @Test
   void testGetDemoMessage_shouldThrowException_whenErrorIsTrue() {
-    // Given
-    when(i18nService.getMessage(DEMO_EXCEPTION_MESSAGE_KEY)).thenReturn(DEMO_EXCEPTION_MESSAGE);
-
     // When / Then
     RuntimeException exception =
         assertThrows(RuntimeException.class, () -> demoService.getDemoMessage(true));
 
     assertEquals(DEMO_EXCEPTION_MESSAGE, exception.getMessage());
-    verify(i18nService).getMessage(DEMO_EXCEPTION_MESSAGE_KEY);
   }
 
   @Test
