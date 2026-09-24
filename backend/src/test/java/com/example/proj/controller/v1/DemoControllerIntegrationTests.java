@@ -1,4 +1,4 @@
-package com.example.proj.controller;
+package com.example.proj.controller.v1;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class DemoControllerIntegrationTests {
 
-  private static final String DEMO_ENDPOINT = "/api/demo";
+  private static final String DEMO_ENDPOINT = "/api/v1/demo";
   private static final String ERROR_PARAMETER = "error";
   private static final String TRUE_VALUE = "true";
   private static final String FALSE_VALUE = "false";

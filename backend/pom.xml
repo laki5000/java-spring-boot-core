@@ -103,7 +103,7 @@
 
 						<configuration>
 							<inputSpec>
-								${project.basedir}/../api/openapi.yml
+								${project.basedir}/../api/v1/openapi.yml
 							</inputSpec>
 
 							<generatorName>spring</generatorName>

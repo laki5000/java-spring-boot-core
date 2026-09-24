@@ -1,4 +1,4 @@
-package com.example.proj.controller;
+package com.example.proj.controller.v1;
 
 import com.example.generated.api.DemoApi;
 import com.example.generated.dto.ApiResponseString;
