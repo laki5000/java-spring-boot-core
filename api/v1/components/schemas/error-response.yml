@@ -3,6 +3,3 @@ type: object
 properties:
   message:
     type: string
-  timestamp:
-    type: string
-    format: date-time
