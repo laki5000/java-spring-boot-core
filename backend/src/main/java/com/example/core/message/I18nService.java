@@ -14,7 +14,7 @@ public class I18nService {
 
   private final MessageSource messageSource;
 
-  @LogExecution(level = Level.DEBUG, logArguments = true, logResult = true)
+  @LogExecution
   public String getMessage(String key) {
     Locale locale = LocaleContextHolder.getLocale();
 

@@ -14,7 +14,7 @@ public class DemoService {
 
   private final I18nService i18nService;
 
-  @LogExecution(level = Level.INFO, logArguments = true, logResult = true)
+  @LogExecution(level = Level.INFO)
   public String getDemoMessage(Boolean error) {
     if (Boolean.TRUE.equals(error)) {
       throw new RuntimeException("Example exception");
