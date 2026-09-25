@@ -36,7 +36,7 @@ public class CoreExceptionHandler {
     HttpMessageNotReadableException.class
   })
   public ResponseEntity<ErrorResponse> handleBadRequest(Exception exception) {
-    log.warn("Bad request: {}", exception.getMessage());
+    log.warn("Bad request", exception);
 
     return createResponse(HttpStatus.BAD_REQUEST, BAD_REQUEST_ERROR_MESSAGE);
   }
@@ -44,7 +44,7 @@ public class CoreExceptionHandler {
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException exception) {
 
-    log.warn("Resource not found: {}", exception.getMessage());
+    log.warn("Resource not found", exception);
 
     return createResponse(HttpStatus.NOT_FOUND, NOT_FOUND_ERROR_MESSAGE);
   }
@@ -53,7 +53,7 @@ public class CoreExceptionHandler {
   public ResponseEntity<ErrorResponse> handleMethodNotAllowed(
       HttpRequestMethodNotSupportedException exception) {
 
-    log.warn("Method not allowed: {}", exception.getMessage());
+    log.warn("Method not allowed", exception);
 
     return createResponse(HttpStatus.METHOD_NOT_ALLOWED, METHOD_NOT_ALLOWED_ERROR_MESSAGE);
   }
@@ -62,7 +62,7 @@ public class CoreExceptionHandler {
   public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(
       HttpMediaTypeNotSupportedException exception) {
 
-    log.warn("Unsupported media type: {}", exception.getMessage());
+    log.warn("Unsupported media type", exception);
 
     return createResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, UNSUPPORTED_MEDIA_TYPE_ERROR_MESSAGE);
   }
