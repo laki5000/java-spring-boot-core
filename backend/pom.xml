@@ -159,6 +159,7 @@
 					<excludes>
 						<exclude>com/example/generated/**</exclude>
 						<exclude>com/example/Application.class</exclude>
+						<exclude>com/example/core/exception/CoreExceptionHandler.class</exclude>
 					</excludes>
 				</configuration>
 
