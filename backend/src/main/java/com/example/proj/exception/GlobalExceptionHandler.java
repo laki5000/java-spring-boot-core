@@ -1,7 +1,7 @@
 package com.example.proj.exception;
 
 import com.example.core.message.I18nService;
-import com.example.generated.dto.ErrorResponse;
+import com.example.generated.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,14 +35,14 @@ public class GlobalExceptionHandler {
     ConstraintViolationException.class,
     HttpMessageNotReadableException.class
   })
-  public ResponseEntity<ErrorResponse> handleBadRequest(Exception exception) {
+  public ResponseEntity<ApiErrorResponse> handleBadRequest(Exception exception) {
     log.warn("Bad request", exception);
 
     return createResponse(HttpStatus.BAD_REQUEST, BAD_REQUEST_ERROR_MESSAGE);
   }
 
   @ExceptionHandler(NoResourceFoundException.class)
-  public ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException exception) {
+  public ResponseEntity<ApiErrorResponse> handleNotFound(NoResourceFoundException exception) {
 
     log.warn("Resource not found", exception);
 
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-  public ResponseEntity<ErrorResponse> handleMethodNotAllowed(
+  public ResponseEntity<ApiErrorResponse> handleMethodNotAllowed(
       HttpRequestMethodNotSupportedException exception) {
 
     log.warn("Method not allowed", exception);
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-  public ResponseEntity<ErrorResponse> handleUnsupportedMediaType(
+  public ResponseEntity<ApiErrorResponse> handleUnsupportedMediaType(
       HttpMediaTypeNotSupportedException exception) {
 
     log.warn("Unsupported media type", exception);
@@ -68,15 +68,15 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+  public ResponseEntity<ApiErrorResponse> handleException(Exception exception) {
     log.error("Unexpected exception occurred", exception);
 
     return createResponse(HttpStatus.INTERNAL_SERVER_ERROR, UNEXPECTED_ERROR_MESSAGE);
   }
 
-  private ResponseEntity<ErrorResponse> createResponse(HttpStatus status, String messageKey) {
+  private ResponseEntity<ApiErrorResponse> createResponse(HttpStatus status, String messageKey) {
 
-    ErrorResponse response = new ErrorResponse();
+    ApiErrorResponse response = new ApiErrorResponse();
     response.setMessage(i18nService.getMessage(messageKey));
 
     return ResponseEntity.status(status).body(response);

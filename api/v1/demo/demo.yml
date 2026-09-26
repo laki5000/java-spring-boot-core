@@ -24,4 +24,4 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/error-response.yml'
+            $ref: '../components/schemas/api-error-response.yml'

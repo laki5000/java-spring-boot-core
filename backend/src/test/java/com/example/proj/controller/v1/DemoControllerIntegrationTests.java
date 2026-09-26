@@ -48,7 +48,7 @@ class DemoControllerIntegrationTests {
   }
 
   @Test
-  void testGetDemo_shouldReturnErrorResponse_whenErrorIsTrue() throws Exception {
+  void testGetDemo_shouldReturnApiErrorResponse_whenErrorIsTrue() throws Exception {
     // Given
 
     // When / Then
