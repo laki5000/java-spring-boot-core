@@ -18,7 +18,6 @@ class DemoServiceUnitTests {
   private static final String DEMO_RUNNING_MESSAGE = "Demo is running";
   private static final String DEMO_EXCEPTION_MESSAGE = "Example exception";
   private static final String DEMO_RUNNING_MESSAGE_KEY = "demo.running";
-  private static final String DEMO_EXCEPTION_MESSAGE_KEY = "demo.example.exception";
 
   @Mock private I18nService i18nService;
 
