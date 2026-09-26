@@ -2,9 +2,9 @@
 
 A reusable Spring Boot project skeleton for Java applications.
 
-The goal of this project is to provide a common starting point for future Spring Boot projects. It contains reusable technical and application-level functionality that is not tied to a specific business domain.
+The goal of this project is to provide a common starting point for future Spring Boot projects. It contains reusable, technology-independent functionality and abstractions that are not tied to a specific business domain or technology.
 
-Future projects can use this project as a base and add their own business logic on top of it.
+Future projects can use this project as a base and add their own business logic and technology-specific integrations on top of it.
 
 ## Overview
 
@@ -12,9 +12,9 @@ This project is a single Spring Boot application.
 
 The source code is organized into three main areas:
 
-* `core` - common, business-independent functionality
-* `integration` - technology integrations
-* `proj` - project-specific business logic
+* `core` - reusable, technology-independent functionality and abstractions
+* `integration` - technology-specific integrations
+* `proj` - project-specific application and business logic
 
 There is a defined dependency direction between them:
 
@@ -40,7 +40,7 @@ integration  → depends on core
 proj         → depends on core
 ```
 
-This keeps the common functionality independent and makes it easier to reuse in future projects.
+This keeps the core functionality independent of specific technologies and project-specific concerns, making it easier to reuse across future projects.
 
 ---
 
@@ -68,20 +68,36 @@ The `api` directory contains the OpenAPI contract.
 
 The `backend` directory contains the Spring Boot application. The three directories inside `backend` are logical architectural boundaries within the same application, not separate projects or Maven modules.
 
-* `core` contains reusable, business-independent functionality.
+* `core` contains reusable, technology-independent functionality and abstractions.
 * `integration` contains technology-specific integrations.
-* `proj` contains project-specific business logic.
+* `proj` contains project-specific application and business logic.
+
+The `core` layer must remain independent of both `integration` and `proj`.
 
 ---
 
 ## Core Functionality
 
-The `core` area provides common functionality that can be reused across projects:
+The `core` area provides common functionality that can be reused across projects without depending on a specific technology or business domain:
 
-* **Global Exception Handling** - centralizes exception handling and provides a consistent API error response.
 * **Internationalization (i18n)** - provides localized messages with configurable locale handling.
 * **Aspect-Oriented Logging** - provides annotation-based method execution logging with configurable log levels, arguments, and results.
+* **Abstractions** - provides interfaces and common contracts that allow project-specific code to remain independent from technology-specific implementations.
+
+Project-specific concerns such as HTTP request logging and global exception handling are implemented in the `proj` area because they are application-level concerns and may depend on the project's API contract.
+
+---
+
+## Project Functionality
+
+The `proj` area contains application-specific functionality that may depend on the project's API contract and application requirements.
+
+This currently includes:
+
+* **Global Exception Handling** - provides centralized exception handling for project-specific exceptions as well as common exceptions. This allows the API to return consistent error responses while keeping API-specific error handling outside of the technology-independent `core`.
 * **HTTP Request Logging** - logs incoming HTTP requests with their method, URI, response status, and execution time.
+
+These concerns are intentionally implemented in `proj` rather than `core`, as they are application-level concerns and may depend on the project's API and error response model.
 
 ---
 

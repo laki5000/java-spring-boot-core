@@ -1,4 +1,4 @@
-package com.example.core.exception;
+package com.example.proj.exception;
 
 import com.example.core.message.I18nService;
 import com.example.generated.dto.ErrorResponse;
@@ -19,7 +19,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
-public class CoreExceptionHandler {
+public class GlobalExceptionHandler {
 
   private static final String UNEXPECTED_ERROR_MESSAGE = "error.unexpected";
   private static final String BAD_REQUEST_ERROR_MESSAGE = "error.bad-request";

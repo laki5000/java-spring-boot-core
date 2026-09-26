@@ -1,4 +1,4 @@
-package com.example.core.logging;
+package com.example.proj.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
