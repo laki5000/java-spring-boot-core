@@ -1,7 +1,7 @@
 spring:
   application:
-    name: com.example.core
+    name: java-spring-boot-core
 
 logging:
   level:
-    com.example.core: DEBUG
+    com.example: DEBUG
