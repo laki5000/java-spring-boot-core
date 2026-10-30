@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>core</artifactId>
+	<artifactId>java-spring-boot-core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
@@ -30,11 +30,6 @@
 		<java.version>25</java.version>
 	</properties>
 	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -65,6 +60,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 
@@ -73,6 +69,14 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 
 			<plugin>
@@ -102,15 +106,11 @@
 						</goals>
 
 						<configuration>
-							<inputSpec>
-								${project.basedir}/../api/v1/openapi.yml
-							</inputSpec>
+							<inputSpec>${project.basedir}/../api/v1/openapi.yml</inputSpec>
 
 							<generatorName>spring</generatorName>
 
-							<output>
-								${project.build.directory}/generated-sources/openapi
-							</output>
+							<output>${project.build.directory}/generated-sources/openapi</output>
 
 							<apiPackage>com.example.generated.api</apiPackage>
 							<modelPackage>com.example.generated.dto</modelPackage>
