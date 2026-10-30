@@ -6,10 +6,15 @@ import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@SpringJUnitConfig({I18nConfig.class, I18nService.class})
+@SpringBootTest(
+    classes = I18nService.class,
+    properties = "spring.messages.basename=messages/messages,messages/test-messages")
+@ImportAutoConfiguration(MessageSourceAutoConfiguration.class)
 class I18nServiceIntegrationTests {
 
   private static final String MESSAGE_KEY = "test.i18n.message";
