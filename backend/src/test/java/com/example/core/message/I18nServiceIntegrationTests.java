@@ -6,10 +6,10 @@ import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@SpringBootTest
+@SpringJUnitConfig({I18nConfig.class, I18nService.class})
 class I18nServiceIntegrationTests {
 
   private static final String MESSAGE_KEY = "test.i18n.message";
@@ -26,7 +26,7 @@ class I18nServiceIntegrationTests {
   }
 
   @Test
-  void testGetMessage_shouldReturnMessageKey_whenLocaleIsUnknown() {
+  void testGetMessage_shouldReturnEnglishMessage_whenLocaleIsUnknown() {
     // Given
     LocaleContextHolder.setLocale(Locale.of(UNKNOWN_LOCALE));
 
@@ -34,7 +34,7 @@ class I18nServiceIntegrationTests {
     String result = i18nService.getMessage(MESSAGE_KEY);
 
     // Then
-    assertEquals(MESSAGE_KEY, result);
+    assertEquals(EXPECTED_ENGLISH_MESSAGE, result);
   }
 
   @Test

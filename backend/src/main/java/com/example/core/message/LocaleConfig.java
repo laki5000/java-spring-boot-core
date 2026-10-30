@@ -1,5 +1,6 @@
 package com.example.core.message;
 
+import java.util.List;
 import java.util.Locale;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,7 @@ public class LocaleConfig {
   @Bean
   public LocaleResolver localeResolver() {
     AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+    resolver.setSupportedLocales(List.of(Locale.ENGLISH, Locale.forLanguageTag("hu")));
     resolver.setDefaultLocale(Locale.ENGLISH);
     return resolver;
   }
