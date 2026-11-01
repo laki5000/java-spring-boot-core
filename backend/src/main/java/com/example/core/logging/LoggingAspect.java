@@ -1,16 +1,17 @@
 package com.example.core.logging;
 
-import java.util.Arrays;
+import java.lang.reflect.Parameter;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.reflect.CodeSignature;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
@@ -31,7 +32,8 @@ public class LoggingAspect {
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
       throws Throwable {
 
-    Logger logger = LoggerFactory.getLogger(ClassUtils.getUserClass(joinPoint.getTarget()));
+    Class<?> targetClass = ClassUtils.getUserClass(joinPoint.getTarget());
+    Logger logger = LoggerFactory.getLogger(targetClass);
     Level level = toSlf4jLevel(logExecution.level());
 
     if (!logger.isEnabledForLevel(level)) {
@@ -40,7 +42,7 @@ public class LoggingAspect {
 
     String methodName = joinPoint.getSignature().getName();
 
-    logStarted(logger, level, logExecution, methodName, joinPoint);
+    logStarted(logger, level, logExecution, methodName, joinPoint, targetClass);
 
     long start = System.nanoTime();
 
@@ -65,13 +67,14 @@ public class LoggingAspect {
       Level level,
       LogExecution annotation,
       String methodName,
-      ProceedingJoinPoint joinPoint) {
+      ProceedingJoinPoint joinPoint,
+      Class<?> targetClass) {
 
     String message =
         methodName
             + STARTED
             + (annotation.logArguments()
-                ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, annotation)
+                ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, targetClass)
                 : "");
 
     logger.atLevel(level).log(message);
@@ -104,21 +107,21 @@ public class LoggingAspect {
     logger.atLevel(level).log(message);
   }
 
-  private String getArgumentsToLog(ProceedingJoinPoint joinPoint, LogExecution annotation) {
+  private String getArgumentsToLog(ProceedingJoinPoint joinPoint, Class<?> targetClass) {
+    MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     Object[] arguments = joinPoint.getArgs();
-    String[] parameterNames = ((CodeSignature) joinPoint.getSignature()).getParameterNames();
-
-    int[] indexes = annotation.argumentIndexes();
+    Parameter[] parameters =
+        AopUtils.getMostSpecificMethod(signature.getMethod(), targetClass).getParameters();
 
     return IntStream.range(0, arguments.length)
         .mapToObj(
             index -> {
-              boolean shouldLogValue =
-                  indexes.length == 0 || Arrays.stream(indexes).anyMatch(i -> i == index);
+              Object value =
+                  parameters[index].isAnnotationPresent(Redacted.class)
+                      ? REDACTED
+                      : arguments[index];
 
-              Object value = shouldLogValue ? arguments[index] : REDACTED;
-
-              return formatArgument(index, parameterNames[index], value);
+              return formatArgument(index, parameters[index].getName(), value);
             })
         .collect(Collectors.joining(", ", "{", "}"));
   }

@@ -16,10 +16,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.reflect.CodeSignature;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,14 +40,16 @@ class LoggingAspectUnitTests {
   private static final String ARGUMENT_2 = "test";
   private static final Boolean ARGUMENT_3 = true;
 
-  private static final String ARGUMENT_NAME_1 = "first";
-  private static final String ARGUMENT_NAME_2 = "second";
-  private static final String ARGUMENT_NAME_3 = "third";
-
   private static final String EXPECTED_ARGUMENT_1 = "0=first: 1";
   private static final String EXPECTED_ARGUMENT_2 = "1=second: test";
   private static final String EXPECTED_ARGUMENT_3 = "2=third: true";
   private static final String REDACTED_ARGUMENT_2 = "1=second: [REDACTED]";
+
+  private static final String SAMPLE_METHOD = "sampleMethod";
+  private static final String REDACTED_SAMPLE_METHOD = "redactedSampleMethod";
+  private static final String INTERFACE_METHOD = "process";
+  private static final String REDACTED_VALUE = "1=value: [REDACTED]";
+  private static final String PLAIN_VALUE = "1=value: test";
 
   private static final String STARTED = "testMethod started";
   private static final String COMPLETED_PREFIX = "testMethod completed in ";
@@ -58,7 +61,7 @@ class LoggingAspectUnitTests {
 
   @Mock private ProceedingJoinPoint joinPoint;
 
-  @Mock private CodeSignature signature;
+  @Mock private MethodSignature signature;
 
   @Mock private LogExecution logExecution;
 
@@ -127,9 +130,10 @@ class LoggingAspectUnitTests {
     when(logExecution.level()).thenReturn(DEBUG);
     lenient().when(logExecution.logArguments()).thenReturn(true);
     lenient().when(logExecution.logResult()).thenReturn(true);
-    lenient().when(joinPoint.getArgs()).thenReturn(new Object[] {countingObject});
-    lenient().when(signature.getParameterNames()).thenReturn(new String[] {ARGUMENT_NAME_1});
-    lenient().when(logExecution.argumentIndexes()).thenReturn(new int[0]);
+    lenient()
+        .when(joinPoint.getArgs())
+        .thenReturn(new Object[] {countingObject, countingObject, countingObject});
+    lenient().when(signature.getMethod()).thenReturn(getSampleMethod(SAMPLE_METHOD));
 
     // When
     Object result = loggingAspect.logExecution(joinPoint, logExecution);
@@ -185,14 +189,12 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldLogAllArguments_whenArgumentLoggingIsEnabledAndIndexesAreEmpty()
-      throws Throwable {
+  void testLogExecution_shouldLogAllArguments_whenArgumentLoggingIsEnabled() throws Throwable {
     // Given
-    mockArguments();
+    mockArguments(SAMPLE_METHOD);
 
     when(logExecution.level()).thenReturn(DEBUG);
     when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[0]);
     when(logExecution.logResult()).thenReturn(false);
 
     // When
@@ -216,14 +218,13 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldLogSelectedArgumentsAndRedactOthers_whenArgumentIndexesAreProvided()
+  void testLogExecution_shouldRedactArgument_whenParameterIsAnnotatedWithRedacted()
       throws Throwable {
     // Given
-    mockArguments();
+    mockArguments(REDACTED_SAMPLE_METHOD);
 
     when(logExecution.level()).thenReturn(DEBUG);
     when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[] {0, 2});
     when(logExecution.logResult()).thenReturn(false);
 
     // When
@@ -240,8 +241,30 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldIgnoreArgumentIndexes_whenArgumentLoggingIsDisabled()
+  void testLogExecution_shouldRedactArgument_whenAnnotationIsOnImplementationOfInterfaceMethod()
       throws Throwable {
+    // Given
+    when(joinPoint.getTarget()).thenReturn(new SampleImplementation());
+    when(joinPoint.getArgs()).thenReturn(new Object[] {ARGUMENT_2, ARGUMENT_2});
+    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
+    when(signature.getMethod())
+        .thenReturn(SampleInterface.class.getMethod(INTERFACE_METHOD, String.class, Object.class));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(true);
+    when(logExecution.logResult()).thenReturn(false);
+
+    // When
+    loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    String message = getLogMessage(0);
+
+    assertTrue(message.contains(REDACTED_VALUE));
+    assertFalse(message.contains(PLAIN_VALUE));
+  }
+
+  @Test
+  void testLogExecution_shouldNotLogArguments_whenArgumentLoggingIsDisabled() throws Throwable {
     // Given
     when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
     when(logExecution.level()).thenReturn(DEBUG);
@@ -281,28 +304,6 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldIgnoreInvalidArgumentIndexes_whenArgumentIndexesAreProvided()
-      throws Throwable {
-    // Given
-    mockArguments();
-
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[] {-1, 0, 99, 2});
-    when(logExecution.logResult()).thenReturn(false);
-
-    // When
-    loggingAspect.logExecution(joinPoint, logExecution);
-
-    // Then
-    String message = getLogMessage(0);
-
-    assertTrue(message.contains(EXPECTED_ARGUMENT_1));
-    assertTrue(message.contains(EXPECTED_ARGUMENT_3));
-    assertTrue(message.contains(REDACTED_ARGUMENT_2));
-  }
-
-  @Test
   void testLogExecution_shouldLogAtInfoLevel_whenInfoLevelIsConfigured() throws Throwable {
     // Given
     when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
@@ -334,13 +335,30 @@ class LoggingAspectUnitTests {
     assertEquals(Level.DEBUG, logAppender.list.getLast().getLevel());
   }
 
-  private void mockArguments() throws Throwable {
+  private void mockArguments(String sampleMethodName) throws Throwable {
     Object[] arguments = {ARGUMENT_1, ARGUMENT_2, ARGUMENT_3};
 
     when(joinPoint.getArgs()).thenReturn(arguments);
     when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(signature.getParameterNames())
-        .thenReturn(new String[] {ARGUMENT_NAME_1, ARGUMENT_NAME_2, ARGUMENT_NAME_3});
+    when(signature.getMethod()).thenReturn(getSampleMethod(sampleMethodName));
+  }
+
+  private Method getSampleMethod(String name) throws NoSuchMethodException {
+    return LoggingAspectUnitTests.class.getDeclaredMethod(
+        name, Long.class, String.class, Boolean.class);
+  }
+
+  private void sampleMethod(Long first, String second, Boolean third) {}
+
+  private void redactedSampleMethod(Long first, @Redacted String second, Boolean third) {}
+
+  interface SampleInterface<T> {
+    void process(String name, T value);
+  }
+
+  static class SampleImplementation implements SampleInterface<String> {
+    @Override
+    public void process(String name, @Redacted String value) {}
   }
 
   private String getLogMessage(int index) {
