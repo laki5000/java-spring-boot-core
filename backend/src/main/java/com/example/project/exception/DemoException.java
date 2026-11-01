@@ -1,4 +1,4 @@
-package com.example.project.demo;
+package com.example.project.exception;
 
 import com.example.core.exception.BusinessException;
 

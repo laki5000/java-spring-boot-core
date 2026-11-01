@@ -1,4 +1,4 @@
-package com.example.core.filter;
+package com.example.core.logging;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

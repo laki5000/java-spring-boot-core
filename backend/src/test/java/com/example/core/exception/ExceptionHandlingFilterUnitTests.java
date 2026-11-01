@@ -1,4 +1,4 @@
-package com.example.core.filter;
+package com.example.core.exception;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

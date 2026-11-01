@@ -1,7 +1,8 @@
-package com.example.project.demo;
+package com.example.project.controller.v1;
 
 import com.example.generated.api.DemoApi;
 import com.example.generated.dto.ApiResponseString;
+import com.example.project.service.DemoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;

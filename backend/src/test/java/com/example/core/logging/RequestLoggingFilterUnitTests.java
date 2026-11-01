@@ -1,4 +1,4 @@
-package com.example.core.filter;
+package com.example.core.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
