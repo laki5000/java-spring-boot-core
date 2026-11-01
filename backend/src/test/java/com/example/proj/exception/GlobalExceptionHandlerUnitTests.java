@@ -2,7 +2,12 @@ package com.example.proj.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import java.util.Locale;
@@ -10,6 +15,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.StaticMessageSource;
 import org.springframework.http.HttpStatus;
@@ -34,8 +40,15 @@ class GlobalExceptionHandlerUnitTests {
   private static final String CONSTRAINT_VIOLATION_MESSAGE = "must not be null";
   private static final URI CUSTOM_PROBLEM_TYPE = URI.create("https://example.com/problems/custom");
   private static final String CUSTOM_PROBLEM_TITLE = "Custom problem";
+  private static final String MULTILINE_REASON = "Bob\r\nINFO fake log line";
+  private static final String ESCAPED_MULTILINE_REASON = "Bob\\r\\nINFO fake log line";
+  private static final int LONG_REASON_LENGTH = 600;
 
   private GlobalExceptionHandler handler;
+
+  private Logger logger;
+  private Level originalLevel;
+  private ListAppender<ILoggingEvent> logAppender;
 
   @BeforeEach
   void setUp() {
@@ -45,11 +58,21 @@ class GlobalExceptionHandlerUnitTests {
 
     handler = new GlobalExceptionHandler();
     handler.setMessageSource(messageSource);
+
+    logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    originalLevel = logger.getLevel();
+    logger.setLevel(Level.DEBUG);
+
+    logAppender = new ListAppender<>();
+    logAppender.start();
+    logger.addAppender(logAppender);
   }
 
   @AfterEach
   void tearDown() {
     LocaleContextHolder.resetLocaleContext();
+    logger.detachAppender(logAppender);
+    logger.setLevel(originalLevel);
   }
 
   @Test
@@ -140,5 +163,21 @@ class GlobalExceptionHandlerUnitTests {
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
 
     assertEquals(CUSTOM_PROBLEM_TITLE, problemDetail.getTitle());
+  }
+
+  @Test
+  void testHandleException_shouldLogEscapedUntruncatedMessage_whenSpringErrorIsClientError()
+      throws Exception {
+    // Given
+    String reason = "x".repeat(LONG_REASON_LENGTH) + MULTILINE_REASON;
+    ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
+
+    // When
+    handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+
+    // Then
+    String message = logAppender.list.getFirst().getFormattedMessage();
+
+    assertTrue(message.contains(reason.replace(MULTILINE_REASON, ESCAPED_MULTILINE_REASON)));
   }
 }

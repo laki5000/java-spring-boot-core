@@ -1,5 +1,6 @@
 package com.example.proj.exception;
 
+import com.example.core.logging.LogSanitizer;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     if (status.is5xxServerError()) {
       log.error("Request failed with status {}", status.value(), exception);
     } else {
-      log.debug("Request failed with status {}: {}", status.value(), exception.getMessage());
+      log.debug(
+          "Request failed with status {}: {}",
+          status.value(),
+          LogSanitizer.escapeLineBreaks(exception.getMessage()));
     }
 
     ProblemDetail problemDetail =

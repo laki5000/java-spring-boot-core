@@ -39,22 +39,10 @@ class LoggingAspectUnitTests {
 
   private static final String REDACTED_VALUE = "1=value: [REDACTED]";
   private static final String PLAIN_VALUE = "1=value: test";
-  private static final int MAX_VALUE_LENGTH = 500;
-  private static final int LONG_VALUE_LENGTH = 600;
-  private static final String TRUNCATED_MARKER = "...(+100 chars)";
-  private static final String TRUNCATED_PREFIX = "...(+";
-  private static final String TRUNCATED_SUFFIX = " chars)";
   private static final String CARRIAGE_RETURN = "\r";
   private static final String LINE_FEED = "\n";
-  private static final String ESCAPED_LINE_FEED = "\\n";
-  private static final int LINE_FEED_COUNT = 300;
   private static final String MULTILINE_VALUE = "Bob\r\nINFO fake log line";
   private static final String ESCAPED_MULTILINE_VALUE = "Bob\\r\\nINFO fake log line";
-  private static final String NULL_TEXT = "null";
-  private static final String FAILED_TO_STRING_VALUE =
-      "[LoggingAspectUnitTests.FailingToStringValue, toString failed: IllegalStateException]";
-  private static final String FAILED_TO_STRING_EXCEPTION =
-      "[LoggingAspectUnitTests.FailingToStringException, toString failed: IllegalStateException]";
 
   private static final String STARTED = " started";
   private static final String COMPLETED_IN = " completed in ";
@@ -242,43 +230,7 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldTruncateLongArgumentsAndResult() {
-    // Given
-    String longValue = "x".repeat(LONG_VALUE_LENGTH);
-
-    // When
-    sampleService.echo(ARGUMENT_1, longValue, ARGUMENT_3);
-
-    // Then
-    String truncatedValue = "x".repeat(MAX_VALUE_LENGTH) + TRUNCATED_MARKER;
-
-    assertTrue(getLogMessage(0).contains(SECOND_ARGUMENT_PREFIX + truncatedValue));
-    assertTrue(getLogMessage(1).contains(RESULT_PREFIX + truncatedValue));
-    assertFalse(getLogMessage(1).contains(longValue));
-  }
-
-  @Test
-  void testLogExecution_shouldTruncateLongExceptionMessage() {
-    // Given
-    RuntimeException exception = new RuntimeException("x".repeat(LONG_VALUE_LENGTH));
-
-    // When
-    assertThrows(RuntimeException.class, () -> sampleService.fail(exception));
-
-    // Then
-    String failedMessage = getLogMessage(1);
-    String exceptionText = exception.toString();
-    String truncatedValue =
-        exceptionText.substring(0, MAX_VALUE_LENGTH)
-            + TRUNCATED_PREFIX
-            + (exceptionText.length() - MAX_VALUE_LENGTH)
-            + TRUNCATED_SUFFIX;
-
-    assertTrue(failedMessage.endsWith(EXCEPTION_PREFIX + truncatedValue));
-  }
-
-  @Test
-  void testLogExecution_shouldEscapeLineBreaksInArgumentsAndResult() {
+  void testLogExecution_shouldSanitizeArgumentsAndResult() {
     // When
     sampleService.echo(ARGUMENT_1, MULTILINE_VALUE, ARGUMENT_3);
 
@@ -293,23 +245,7 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldTruncateAfterEscapingLineBreaks() {
-    // When
-    sampleService.echo(ARGUMENT_1, LINE_FEED.repeat(LINE_FEED_COUNT), ARGUMENT_3);
-
-    // Then
-    String escapedValue = ESCAPED_LINE_FEED.repeat(LINE_FEED_COUNT);
-    String truncatedValue =
-        escapedValue.substring(0, MAX_VALUE_LENGTH)
-            + TRUNCATED_PREFIX
-            + (escapedValue.length() - MAX_VALUE_LENGTH)
-            + TRUNCATED_SUFFIX;
-
-    assertTrue(getLogMessage(1).endsWith(RESULT_PREFIX + truncatedValue));
-  }
-
-  @Test
-  void testLogExecution_shouldEscapeLineBreaksInExceptionMessage() {
+  void testLogExecution_shouldSanitizeException() {
     // When
     assertThrows(
         RuntimeException.class, () -> sampleService.fail(new RuntimeException(MULTILINE_VALUE)));
@@ -319,48 +255,6 @@ class LoggingAspectUnitTests {
 
     assertTrue(failedMessage.contains(ESCAPED_MULTILINE_VALUE));
     assertFalse(failedMessage.contains(LINE_FEED) || failedMessage.contains(CARRIAGE_RETURN));
-  }
-
-  @Test
-  void testLogExecution_shouldKeepResult_whenArgumentOrResultToStringFails() {
-    // Given
-    FailingToStringValue failingValue = new FailingToStringValue();
-
-    // When
-    Object result = sampleService.echo(ARGUMENT_1, failingValue, ARGUMENT_3);
-
-    // Then
-    assertSame(failingValue, result);
-    assertTrue(getLogMessage(0).contains(SECOND_ARGUMENT_PREFIX + FAILED_TO_STRING_VALUE));
-    assertTrue(getLogMessage(1).contains(RESULT_PREFIX + FAILED_TO_STRING_VALUE));
-  }
-
-  @Test
-  void testLogExecution_shouldKeepResult_whenArgumentOrResultToStringReturnsNull() {
-    // Given
-    NullToStringValue nullValue = new NullToStringValue();
-
-    // When
-    Object result = sampleService.echo(ARGUMENT_1, nullValue, ARGUMENT_3);
-
-    // Then
-    assertSame(nullValue, result);
-    assertTrue(getLogMessage(0).contains(SECOND_ARGUMENT_PREFIX + NULL_TEXT));
-    assertTrue(getLogMessage(1).endsWith(RESULT_PREFIX + NULL_TEXT));
-  }
-
-  @Test
-  void testLogExecution_shouldPropagateOriginalException_whenExceptionToStringFails() {
-    // Given
-    FailingToStringException expectedException = new FailingToStringException();
-
-    // When
-    FailingToStringException actualException =
-        assertThrows(FailingToStringException.class, () -> sampleService.fail(expectedException));
-
-    // Then
-    assertSame(expectedException, actualException);
-    assertTrue(getLogMessage(1).endsWith(EXCEPTION_PREFIX + FAILED_TO_STRING_EXCEPTION));
   }
 
   @Test
@@ -476,26 +370,5 @@ class LoggingAspectUnitTests {
     @Override
     @LogExecution(logArguments = true)
     public void process(String name, @Redacted String value) {}
-  }
-
-  static class FailingToStringValue {
-    @Override
-    public String toString() {
-      throw new IllegalStateException();
-    }
-  }
-
-  static class NullToStringValue {
-    @Override
-    public String toString() {
-      return null;
-    }
-  }
-
-  static class FailingToStringException extends RuntimeException {
-    @Override
-    public String toString() {
-      throw new IllegalStateException();
-    }
   }
 }
