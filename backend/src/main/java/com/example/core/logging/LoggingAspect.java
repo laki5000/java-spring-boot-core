@@ -30,6 +30,10 @@ public class LoggingAspect {
   private static final int MAX_VALUE_LENGTH = 500;
   private static final String TRUNCATED_PREFIX = "...(+";
   private static final String TRUNCATED_SUFFIX = " chars)";
+  private static final String CARRIAGE_RETURN = "\r";
+  private static final String ESCAPED_CARRIAGE_RETURN = "\\r";
+  private static final String LINE_FEED = "\n";
+  private static final String ESCAPED_LINE_FEED = "\\n";
 
   @Around("@annotation(logExecution)")
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
@@ -96,7 +100,7 @@ public class LoggingAspect {
             + COMPLETED_IN
             + duration
             + MILLISECONDS_SUFFIX
-            + (annotation.logResult() ? RESULT_PREFIX + truncate(result) : "");
+            + (annotation.logResult() ? RESULT_PREFIX + formatValue(result) : "");
 
     logger.atLevel(level).log(message);
   }
@@ -105,7 +109,12 @@ public class LoggingAspect {
       Logger logger, Level level, String methodName, Throwable throwable, long duration) {
 
     String message =
-        methodName + FAILED_AFTER + duration + MILLISECONDS_SUFFIX + EXCEPTION_PREFIX + throwable;
+        methodName
+            + FAILED_AFTER
+            + duration
+            + MILLISECONDS_SUFFIX
+            + EXCEPTION_PREFIX
+            + formatValue(throwable);
 
     logger.atLevel(level).log(message);
   }
@@ -130,11 +139,14 @@ public class LoggingAspect {
   }
 
   private String formatArgument(int index, String name, Object value) {
-    return index + "=" + name + ": " + truncate(value);
+    return index + "=" + name + ": " + formatValue(value);
   }
 
-  private String truncate(Object value) {
-    String text = String.valueOf(value);
+  private String formatValue(Object value) {
+    String text =
+        String.valueOf(value)
+            .replace(CARRIAGE_RETURN, ESCAPED_CARRIAGE_RETURN)
+            .replace(LINE_FEED, ESCAPED_LINE_FEED);
 
     if (text.length() <= MAX_VALUE_LENGTH) {
       return text;

@@ -53,6 +53,14 @@ class LoggingAspectUnitTests {
   private static final int MAX_VALUE_LENGTH = 500;
   private static final int LONG_VALUE_LENGTH = 600;
   private static final String TRUNCATED_MARKER = "...(+100 chars)";
+  private static final String TRUNCATED_PREFIX = "...(+";
+  private static final String TRUNCATED_SUFFIX = " chars)";
+  private static final String CARRIAGE_RETURN = "\r";
+  private static final String LINE_FEED = "\n";
+  private static final String ESCAPED_LINE_FEED = "\\n";
+  private static final int LINE_FEED_COUNT = 300;
+  private static final String MULTILINE_VALUE = "Bob\r\nINFO fake log line";
+  private static final String ESCAPED_MULTILINE_VALUE = "Bob\\r\\nINFO fake log line";
 
   private static final String STARTED = "testMethod started";
   private static final String COMPLETED_PREFIX = "testMethod completed in ";
@@ -287,6 +295,90 @@ class LoggingAspectUnitTests {
     assertTrue(getLogMessage(0).contains("1=second: " + truncatedValue));
     assertTrue(getLogMessage(1).contains(RESULT_PREFIX + truncatedValue));
     assertFalse(getLogMessage(1).contains(longValue));
+  }
+
+  @Test
+  void testLogExecution_shouldTruncateLongExceptionMessage() throws Throwable {
+    // Given
+    RuntimeException exception = new RuntimeException("x".repeat(LONG_VALUE_LENGTH));
+
+    when(joinPoint.proceed()).thenThrow(exception);
+    when(logExecution.level()).thenReturn(DEBUG);
+
+    // When
+    assertThrows(RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
+
+    // Then
+    String failedMessage = getLogMessage(1);
+    String exceptionText = exception.toString();
+    String truncatedValue =
+        exceptionText.substring(0, MAX_VALUE_LENGTH)
+            + TRUNCATED_PREFIX
+            + (exceptionText.length() - MAX_VALUE_LENGTH)
+            + TRUNCATED_SUFFIX;
+
+    assertTrue(failedMessage.endsWith(EXCEPTION_PREFIX + truncatedValue));
+  }
+
+  @Test
+  void testLogExecution_shouldEscapeLineBreaksInArgumentsAndResult() throws Throwable {
+    // Given
+    when(joinPoint.getArgs()).thenReturn(new Object[] {ARGUMENT_1, MULTILINE_VALUE, ARGUMENT_3});
+    when(joinPoint.proceed()).thenReturn(MULTILINE_VALUE);
+    when(signature.getMethod()).thenReturn(getSampleMethod(SAMPLE_METHOD));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(true);
+    when(logExecution.logResult()).thenReturn(true);
+
+    // When
+    loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    String startedMessage = getLogMessage(0);
+    String completedMessage = getLogMessage(1);
+
+    assertTrue(startedMessage.contains("1=second: " + ESCAPED_MULTILINE_VALUE));
+    assertTrue(completedMessage.contains(RESULT_PREFIX + ESCAPED_MULTILINE_VALUE));
+    assertFalse(startedMessage.contains(LINE_FEED) || startedMessage.contains(CARRIAGE_RETURN));
+    assertFalse(completedMessage.contains(LINE_FEED) || completedMessage.contains(CARRIAGE_RETURN));
+  }
+
+  @Test
+  void testLogExecution_shouldTruncateAfterEscapingLineBreaks() throws Throwable {
+    // Given
+    when(joinPoint.proceed()).thenReturn(LINE_FEED.repeat(LINE_FEED_COUNT));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(false);
+    when(logExecution.logResult()).thenReturn(true);
+
+    // When
+    loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    String escapedValue = ESCAPED_LINE_FEED.repeat(LINE_FEED_COUNT);
+    String truncatedValue =
+        escapedValue.substring(0, MAX_VALUE_LENGTH)
+            + TRUNCATED_PREFIX
+            + (escapedValue.length() - MAX_VALUE_LENGTH)
+            + TRUNCATED_SUFFIX;
+
+    assertTrue(getLogMessage(1).endsWith(RESULT_PREFIX + truncatedValue));
+  }
+
+  @Test
+  void testLogExecution_shouldEscapeLineBreaksInExceptionMessage() throws Throwable {
+    // Given
+    when(joinPoint.proceed()).thenThrow(new RuntimeException(MULTILINE_VALUE));
+    when(logExecution.level()).thenReturn(DEBUG);
+
+    // When
+    assertThrows(RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
+
+    // Then
+    String failedMessage = getLogMessage(1);
+
+    assertTrue(failedMessage.contains(ESCAPED_MULTILINE_VALUE));
+    assertFalse(failedMessage.contains(LINE_FEED) || failedMessage.contains(CARRIAGE_RETURN));
   }
 
   @Test
