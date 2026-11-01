@@ -16,3 +16,15 @@ app:
   locale:
     default-locale: en
     supported-locales: en, hu
+
+management:
+  server:
+    port: 9091
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
