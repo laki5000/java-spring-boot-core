@@ -8,3 +8,8 @@ spring:
 logging:
   pattern:
     correlation: "[%X{requestId:-}] "
+
+app:
+  locale:
+    default-locale: en
+    supported-locales: en, hu

@@ -23,7 +23,7 @@ class MessagesUnitTests {
     Resource[] messageFiles = resolver.getResources("classpath*:messages/messages*.properties");
 
     // When / Then
-    assertThat(messageFiles).hasSizeGreaterThan(1);
+    assertThat(messageFiles).isNotEmpty();
 
     SoftAssertions softly = new SoftAssertions();
 

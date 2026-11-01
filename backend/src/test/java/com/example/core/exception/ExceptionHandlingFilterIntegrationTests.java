@@ -19,7 +19,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-@SpringBootTest
+@SpringBootTest(
+    properties = {
+      "spring.messages.basename=messages/test-messages,messages/messages",
+      "app.locale.default-locale=en",
+      "app.locale.supported-locales=en,hu"
+    })
 @AutoConfigureMockMvc
 class ExceptionHandlingFilterIntegrationTests {
 
@@ -28,7 +33,7 @@ class ExceptionHandlingFilterIntegrationTests {
   @Autowired private MockMvc mockMvc;
 
   @ParameterizedTest
-  @CsvSource({"'', Internal Server Error", "hu, Váratlan hiba történt"})
+  @CsvSource({"'', Test internal server error", "hu, Teszt belső hiba"})
   void filterException_shouldReturnLocalizedProblemDetailWithRequestId(
       String language, String expectedTitle) throws Exception {
     // Given
