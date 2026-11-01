@@ -1,4 +1,4 @@
-package com.example.core.message;
+package com.example.proj.config;
 
 import java.util.List;
 import java.util.Locale;
