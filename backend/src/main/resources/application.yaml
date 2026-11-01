@@ -4,3 +4,7 @@ spring:
   messages:
     basename: messages/messages
     fallback-to-system-locale: false
+
+logging:
+  pattern:
+    correlation: "[%X{requestId:-}] "

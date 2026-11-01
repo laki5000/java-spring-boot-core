@@ -180,4 +180,19 @@ class GlobalExceptionHandlerUnitTests {
 
     assertTrue(message.contains(reason.replace(MULTILINE_REASON, ESCAPED_MULTILINE_REASON)));
   }
+
+  @Test
+  void testHandleException_shouldNotAddRequestId_whenMdcHasNoRequestId() throws Exception {
+    // Given
+    ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
+    // When
+    ResponseEntity<Object> response =
+        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+
+    // Then
+    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
+
+    assertNull(problemDetail.getProperties());
+  }
 }

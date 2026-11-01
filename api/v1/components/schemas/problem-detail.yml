@@ -17,3 +17,5 @@ properties:
   instance:
     type: string
     format: uri
+  requestId:
+    type: string

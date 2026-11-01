@@ -1,10 +1,12 @@
 package com.example.proj.exception;
 
 import com.example.core.logging.LogSanitizer;
+import com.example.proj.logging.RequestIdFilter;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.MDC;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -70,6 +72,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     if (status.is5xxServerError()) {
       problemDetail.setDetail(null);
+    }
+
+    String requestId = MDC.get(RequestIdFilter.REQUEST_ID_KEY);
+
+    if (requestId != null) {
+      problemDetail.setProperty(RequestIdFilter.REQUEST_ID_KEY, requestId);
     }
 
     if (hasDefaultType(problemDetail) && problemDetail.getTitle() != null) {
