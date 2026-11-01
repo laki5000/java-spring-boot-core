@@ -26,6 +26,22 @@ class GlobalExceptionHandlerUnitTests {
   }
 
   @Test
+  void testHandleUnexpectedException_shouldReturnInternalServerError() {
+    // Given
+    RuntimeException exception = new RuntimeException(INTERNAL_DETAIL);
+
+    // When
+    ResponseEntity<Object> response =
+        handler.handleUnexpectedException(
+            exception, new ServletWebRequest(new MockHttpServletRequest()));
+
+    // Then
+    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problemDetail.getStatus());
+  }
+
+  @Test
   void testHandleException_shouldNotExposeDetail_whenSpringErrorIsServerError() throws Exception {
     // Given
     ResponseStatusException exception =

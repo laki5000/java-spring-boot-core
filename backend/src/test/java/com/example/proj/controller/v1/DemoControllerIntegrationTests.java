@@ -26,7 +26,8 @@ class DemoControllerIntegrationTests {
   private static final String RESPONSE_DETAIL_PATH = "$.detail";
   private static final String RESPONSE_INSTANCE_PATH = "$.instance";
   private static final String EXPECTED_RUNNING_MESSAGE = "Core application is running";
-  private static final String EXPECTED_INTERNAL_SERVER_ERROR_TITLE = "Internal Server Error";
+  private static final String EXPECTED_UNPROCESSABLE_CONTENT_TITLE = "Unprocessable Content";
+  private static final String EXPECTED_DEMO_ERROR_DETAIL = "Demo error was requested";
 
   @Autowired private MockMvc mockMvc;
 
@@ -53,15 +54,15 @@ class DemoControllerIntegrationTests {
   }
 
   @Test
-  void testGetDemo_shouldReturnProblemDetailWithoutDetail_whenErrorIsTrue() throws Exception {
+  void testGetDemo_shouldReturnUnprocessableContent_whenErrorIsTrue() throws Exception {
     // When / Then
     mockMvc
         .perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, TRUE_VALUE))
-        .andExpect(status().isInternalServerError())
+        .andExpect(status().isUnprocessableContent())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath(RESPONSE_TITLE_PATH).value(EXPECTED_INTERNAL_SERVER_ERROR_TITLE))
-        .andExpect(jsonPath(RESPONSE_STATUS_PATH).value(500))
-        .andExpect(jsonPath(RESPONSE_INSTANCE_PATH).value(DEMO_ENDPOINT))
-        .andExpect(jsonPath(RESPONSE_DETAIL_PATH).doesNotExist());
+        .andExpect(jsonPath(RESPONSE_TITLE_PATH).value(EXPECTED_UNPROCESSABLE_CONTENT_TITLE))
+        .andExpect(jsonPath(RESPONSE_STATUS_PATH).value(422))
+        .andExpect(jsonPath(RESPONSE_DETAIL_PATH).value(EXPECTED_DEMO_ERROR_DETAIL))
+        .andExpect(jsonPath(RESPONSE_INSTANCE_PATH).value(DEMO_ENDPOINT));
   }
 }
