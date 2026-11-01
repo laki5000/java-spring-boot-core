@@ -1,10 +1,11 @@
 package com.example.core.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
@@ -19,12 +20,9 @@ class RequestLoggingFilterUnitTests {
 
   private static final String REQUEST_URI = "/api/demo";
   private static final String HTTP_METHOD = "GET";
-  private static final String EXCEPTION_MESSAGE = "Test exception";
-  private static final String EXPECTED_SUCCESS_LOG_PATTERN = "GET /api/demo -> 404 \\(\\d+ ms\\)";
-  private static final String EXPECTED_EXCEPTION_LOG_PATTERN = "GET /api/demo -> 500 \\(\\d+ ms\\)";
 
   private RequestLoggingFilter filter;
-  private ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> logAppender;
+  private ListAppender<ILoggingEvent> logAppender;
 
   @BeforeEach
   void setUp() {
@@ -46,7 +44,7 @@ class RequestLoggingFilterUnitTests {
   }
 
   @Test
-  void doFilterInternal_logsResponseStatus_whenRequestCompletes() throws Exception {
+  void doFilterInternal_shouldLogResponseStatus_whenRequestCompletes() throws Exception {
     // Given
     MockHttpServletRequest request = new MockHttpServletRequest(HTTP_METHOD, REQUEST_URI);
     MockHttpServletResponse response = new MockHttpServletResponse();
@@ -62,21 +60,22 @@ class RequestLoggingFilterUnitTests {
     var logEvent = logAppender.list.getFirst();
 
     assertThat(logEvent.getLevel()).isEqualTo(Level.INFO);
-    assertThat(logEvent.getFormattedMessage()).matches(EXPECTED_SUCCESS_LOG_PATTERN);
+    assertThat(logEvent.getFormattedMessage()).matches("GET /api/demo -> 404 \\(\\d+ ms\\)");
   }
 
   @Test
-  void doFilterInternal_logsInternalServerError_whenFilterChainThrowsException() {
+  void doFilterInternal_shouldLogInternalServerError_whenFilterChainThrowsException() {
     // Given
     MockHttpServletRequest request = new MockHttpServletRequest(HTTP_METHOD, REQUEST_URI);
     MockHttpServletResponse response = new MockHttpServletResponse();
     FilterChain filterChain =
         (req, res) -> {
-          throw new RuntimeException(EXCEPTION_MESSAGE);
+          throw new RuntimeException("Test exception");
         };
 
     // When
-    assertThrows(RuntimeException.class, () -> filter.doFilter(request, response, filterChain));
+    assertThatThrownBy(() -> filter.doFilter(request, response, filterChain))
+        .isInstanceOf(RuntimeException.class);
 
     // Then
     assertThat(logAppender.list).hasSize(1);
@@ -84,6 +83,6 @@ class RequestLoggingFilterUnitTests {
     var logEvent = logAppender.list.getFirst();
 
     assertThat(logEvent.getLevel()).isEqualTo(Level.INFO);
-    assertThat(logEvent.getFormattedMessage()).matches(EXPECTED_EXCEPTION_LOG_PATTERN);
+    assertThat(logEvent.getFormattedMessage()).matches("GET /api/demo -> 500 \\(\\d+ ms\\)");
   }
 }

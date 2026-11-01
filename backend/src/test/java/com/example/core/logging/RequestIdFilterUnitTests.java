@@ -1,8 +1,7 @@
 package com.example.core.logging;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.servlet.FilterChain;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 class RequestIdFilterUnitTests {
 
   private static final int MAX_REQUEST_ID_LENGTH = 64;
-  private static final String EXCEPTION_MESSAGE = "Test exception";
 
   private RequestIdFilter filter;
   private MockHttpServletRequest request;
@@ -33,7 +31,7 @@ class RequestIdFilterUnitTests {
   }
 
   @Test
-  void doFilterInternal_putsGeneratedIdIntoMdcAndResponseHeader() throws Exception {
+  void doFilterInternal_shouldPutGeneratedIdIntoMdcAndResponseHeader() throws Exception {
     // Given
     AtomicReference<String> requestIdInChain = new AtomicReference<>();
     FilterChain filterChain =
@@ -45,14 +43,14 @@ class RequestIdFilterUnitTests {
     // Then
     String requestId = response.getHeader(RequestIdFilter.REQUEST_ID_HEADER);
 
-    assertEquals(UUID.fromString(requestId).toString(), requestId);
-    assertEquals(requestId, requestIdInChain.get());
-    assertNull(MDC.get(RequestIdFilter.REQUEST_ID_KEY));
+    assertThat(requestId).isEqualTo(UUID.fromString(requestId).toString());
+    assertThat(requestIdInChain.get()).isEqualTo(requestId);
+    assertThat(MDC.get(RequestIdFilter.REQUEST_ID_KEY)).isNull();
   }
 
   @ParameterizedTest
   @MethodSource("validRequestIds")
-  void doFilterInternal_usesIncomingRequestId_whenItIsValid(String incomingRequestId)
+  void doFilterInternal_shouldUseIncomingRequestId_whenItIsValid(String incomingRequestId)
       throws Exception {
     // Given
     request.addHeader(RequestIdFilter.REQUEST_ID_HEADER, incomingRequestId);
@@ -65,14 +63,14 @@ class RequestIdFilterUnitTests {
     filter.doFilter(request, response, filterChain);
 
     // Then
-    assertEquals(incomingRequestId, response.getHeader(RequestIdFilter.REQUEST_ID_HEADER));
-    assertEquals(incomingRequestId, requestIdInChain.get());
+    assertThat(response.getHeader(RequestIdFilter.REQUEST_ID_HEADER)).isEqualTo(incomingRequestId);
+    assertThat(requestIdInChain.get()).isEqualTo(incomingRequestId);
   }
 
   @ParameterizedTest
   @MethodSource("invalidRequestIds")
-  void doFilterInternal_generatesRequestId_whenIncomingRequestIdIsInvalid(String incomingRequestId)
-      throws Exception {
+  void doFilterInternal_shouldGenerateRequestId_whenIncomingRequestIdIsInvalid(
+      String incomingRequestId) throws Exception {
     // Given
     request.addHeader(RequestIdFilter.REQUEST_ID_HEADER, incomingRequestId);
 
@@ -82,7 +80,7 @@ class RequestIdFilterUnitTests {
     // Then
     String requestId = response.getHeader(RequestIdFilter.REQUEST_ID_HEADER);
 
-    assertEquals(UUID.fromString(requestId).toString(), requestId);
+    assertThat(requestId).isEqualTo(UUID.fromString(requestId).toString());
   }
 
   static Stream<String> validRequestIds() {
@@ -94,17 +92,18 @@ class RequestIdFilterUnitTests {
   }
 
   @Test
-  void doFilterInternal_removesIdFromMdc_whenFilterChainThrowsException() {
+  void doFilterInternal_shouldRemoveIdFromMdc_whenFilterChainThrowsException() {
     // Given
     FilterChain filterChain =
         (req, res) -> {
-          throw new RuntimeException(EXCEPTION_MESSAGE);
+          throw new RuntimeException("Test exception");
         };
 
     // When
-    assertThrows(RuntimeException.class, () -> filter.doFilter(request, response, filterChain));
+    assertThatThrownBy(() -> filter.doFilter(request, response, filterChain))
+        .isInstanceOf(RuntimeException.class);
 
     // Then
-    assertNull(MDC.get(RequestIdFilter.REQUEST_ID_KEY));
+    assertThat(MDC.get(RequestIdFilter.REQUEST_ID_KEY)).isNull();
   }
 }

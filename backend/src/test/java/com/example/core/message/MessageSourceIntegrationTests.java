@@ -1,6 +1,6 @@
 package com.example.core.message;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Locale;
 import org.junit.jupiter.api.AfterEach;
@@ -15,13 +15,11 @@ import org.springframework.context.i18n.LocaleContextHolder;
     classes = I18nService.class,
     properties = "spring.messages.basename=messages/messages,messages/test-messages")
 @ImportAutoConfiguration(MessageSourceAutoConfiguration.class)
-class I18nServiceIntegrationTests {
+class MessageSourceIntegrationTests {
 
   private static final String MESSAGE_KEY = "test.i18n.message";
   private static final String MISSING_MESSAGE_KEY = "missing.i18n.message";
-  private static final String UNKNOWN_LOCALE = "de";
   private static final String EXPECTED_ENGLISH_MESSAGE = "Test English message";
-  private static final String EXPECTED_HUNGARIAN_MESSAGE = "Teszt magyar üzenet";
 
   @Autowired private I18nService i18nService;
 
@@ -31,19 +29,19 @@ class I18nServiceIntegrationTests {
   }
 
   @Test
-  void testGetMessage_shouldReturnEnglishMessage_whenLocaleIsUnknown() {
+  void getMessage_shouldReturnEnglishMessage_whenLocaleIsUnknown() {
     // Given
-    LocaleContextHolder.setLocale(Locale.of(UNKNOWN_LOCALE));
+    LocaleContextHolder.setLocale(Locale.of("de"));
 
     // When
     String result = i18nService.getMessage(MESSAGE_KEY);
 
     // Then
-    assertEquals(EXPECTED_ENGLISH_MESSAGE, result);
+    assertThat(result).isEqualTo(EXPECTED_ENGLISH_MESSAGE);
   }
 
   @Test
-  void testGetMessage_shouldReturnMessageKey_whenMessageKeyDoesNotExist() {
+  void getMessage_shouldReturnMessageKey_whenMessageKeyDoesNotExist() {
     // Given
     LocaleContextHolder.setLocale(Locale.ENGLISH);
 
@@ -51,11 +49,11 @@ class I18nServiceIntegrationTests {
     String result = i18nService.getMessage(MISSING_MESSAGE_KEY);
 
     // Then
-    assertEquals(MISSING_MESSAGE_KEY, result);
+    assertThat(result).isEqualTo(MISSING_MESSAGE_KEY);
   }
 
   @Test
-  void testGetMessage_shouldReturnHungarianMessage_whenLocaleIsHungarian() {
+  void getMessage_shouldReturnHungarianMessage_whenLocaleIsHungarian() {
     // Given
     LocaleContextHolder.setLocale(Locale.forLanguageTag("hu"));
 
@@ -63,11 +61,11 @@ class I18nServiceIntegrationTests {
     String result = i18nService.getMessage(MESSAGE_KEY);
 
     // Then
-    assertEquals(EXPECTED_HUNGARIAN_MESSAGE, result);
+    assertThat(result).isEqualTo("Teszt magyar üzenet");
   }
 
   @Test
-  void testGetMessage_shouldReturnEnglishMessage_whenLocaleIsEnglish() {
+  void getMessage_shouldReturnEnglishMessage_whenLocaleIsEnglish() {
     // Given
     LocaleContextHolder.setLocale(Locale.ENGLISH);
 
@@ -75,6 +73,6 @@ class I18nServiceIntegrationTests {
     String result = i18nService.getMessage(MESSAGE_KEY);
 
     // Then
-    assertEquals(EXPECTED_ENGLISH_MESSAGE, result);
+    assertThat(result).isEqualTo(EXPECTED_ENGLISH_MESSAGE);
   }
 }

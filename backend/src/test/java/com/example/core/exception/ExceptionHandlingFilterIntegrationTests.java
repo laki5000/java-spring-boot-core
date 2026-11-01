@@ -23,21 +23,16 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @AutoConfigureMockMvc
 class ExceptionHandlingFilterIntegrationTests {
 
-  private static final String THROWING_PATH = "/test/throwing-filter";
   private static final String REQUEST_ID_HEADER = "X-Request-Id";
-  private static final String RESPONSE_TITLE_PATH = "$.title";
-  private static final String RESPONSE_STATUS_PATH = "$.status";
-  private static final String RESPONSE_DETAIL_PATH = "$.detail";
-  private static final String RESPONSE_REQUEST_ID_PATH = "$.requestId";
 
   @Autowired private MockMvc mockMvc;
 
   @ParameterizedTest
   @CsvSource({"'', Internal Server Error", "hu, Váratlan hiba történt"})
-  void testFilterException_shouldReturnLocalizedProblemDetailWithRequestId(
+  void filterException_shouldReturnLocalizedProblemDetailWithRequestId(
       String language, String expectedTitle) throws Exception {
     // Given
-    MockHttpServletRequestBuilder request = get(THROWING_PATH);
+    MockHttpServletRequestBuilder request = get("/test/throwing-filter");
 
     if (!language.isEmpty()) {
       request.header(HttpHeaders.ACCEPT_LANGUAGE, language);
@@ -52,10 +47,10 @@ class ExceptionHandlingFilterIntegrationTests {
     result
         .andExpect(status().isInternalServerError())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath(RESPONSE_TITLE_PATH).value(expectedTitle))
-        .andExpect(jsonPath(RESPONSE_STATUS_PATH).value(500))
-        .andExpect(jsonPath(RESPONSE_DETAIL_PATH).doesNotExist())
-        .andExpect(jsonPath(RESPONSE_REQUEST_ID_PATH).value(requestId));
+        .andExpect(jsonPath("$.title").value(expectedTitle))
+        .andExpect(jsonPath("$.status").value(500))
+        .andExpect(jsonPath("$.detail").doesNotExist())
+        .andExpect(jsonPath("$.requestId").value(requestId));
   }
 
   @TestConfiguration

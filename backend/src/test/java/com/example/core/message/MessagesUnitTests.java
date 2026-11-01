@@ -14,15 +14,13 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 class MessagesUnitTests {
 
-  private static final String DEFAULT_MESSAGES = "classpath:messages/messages.properties";
-  private static final String ALL_MESSAGES = "classpath*:messages/messages*.properties";
-
   @Test
   void messageFiles_shouldContainSameKeys_inEveryLanguage() throws IOException {
     // Given
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    Properties defaultMessages = load(resolver.getResource(DEFAULT_MESSAGES));
-    Resource[] messageFiles = resolver.getResources(ALL_MESSAGES);
+    Properties defaultMessages =
+        load(resolver.getResource("classpath:messages/messages.properties"));
+    Resource[] messageFiles = resolver.getResources("classpath*:messages/messages*.properties");
 
     // When / Then
     assertThat(messageFiles).hasSizeGreaterThan(1);

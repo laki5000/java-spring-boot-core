@@ -20,36 +20,23 @@ class DemoControllerIntegrationTests {
 
   private static final String DEMO_ENDPOINT = "/api/v1/demo";
   private static final String ERROR_PARAMETER = "error";
-  private static final String TRUE_VALUE = "true";
-  private static final String FALSE_VALUE = "false";
   private static final String RESPONSE_DATA_PATH = "$.data";
-  private static final String RESPONSE_TITLE_PATH = "$.title";
-  private static final String RESPONSE_STATUS_PATH = "$.status";
-  private static final String RESPONSE_DETAIL_PATH = "$.detail";
-  private static final String RESPONSE_INSTANCE_PATH = "$.instance";
-  private static final String RESPONSE_REQUEST_ID_PATH = "$.requestId";
   private static final String REQUEST_ID_HEADER = "X-Request-Id";
   private static final String EXPECTED_RUNNING_MESSAGE = "Core application is running";
-  private static final String EXPECTED_UNPROCESSABLE_CONTENT_TITLE = "Unprocessable Content";
-  private static final String EXPECTED_DEMO_ERROR_DETAIL = "Demo error was requested";
 
   @Autowired private MockMvc mockMvc;
 
   @Test
-  void testGetDemo_shouldReturnRunningMessage_whenErrorIsFalse() throws Exception {
-    // Given
-
+  void getDemo_shouldReturnRunningMessage_whenErrorIsFalse() throws Exception {
     // When / Then
     mockMvc
-        .perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, FALSE_VALUE))
+        .perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, "false"))
         .andExpect(status().isOk())
         .andExpect(jsonPath(RESPONSE_DATA_PATH).value(EXPECTED_RUNNING_MESSAGE));
   }
 
   @Test
-  void testGetDemo_shouldReturnRunningMessage_whenErrorIsNull() throws Exception {
-    // Given
-
+  void getDemo_shouldReturnRunningMessage_whenErrorIsNull() throws Exception {
     // When / Then
     mockMvc
         .perform(get(DEMO_ENDPOINT))
@@ -58,9 +45,9 @@ class DemoControllerIntegrationTests {
   }
 
   @Test
-  void testGetDemo_shouldReturnUnprocessableContent_whenErrorIsTrue() throws Exception {
+  void getDemo_shouldReturnUnprocessableContent_whenErrorIsTrue() throws Exception {
     // When
-    ResultActions result = mockMvc.perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, TRUE_VALUE));
+    ResultActions result = mockMvc.perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, "true"));
 
     // Then
     String requestId = result.andReturn().getResponse().getHeader(REQUEST_ID_HEADER);
@@ -68,11 +55,11 @@ class DemoControllerIntegrationTests {
     result
         .andExpect(status().isUnprocessableContent())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath(RESPONSE_TITLE_PATH).value(EXPECTED_UNPROCESSABLE_CONTENT_TITLE))
-        .andExpect(jsonPath(RESPONSE_STATUS_PATH).value(422))
-        .andExpect(jsonPath(RESPONSE_DETAIL_PATH).value(EXPECTED_DEMO_ERROR_DETAIL))
-        .andExpect(jsonPath(RESPONSE_INSTANCE_PATH).value(DEMO_ENDPOINT))
+        .andExpect(jsonPath("$.title").value("Unprocessable Content"))
+        .andExpect(jsonPath("$.status").value(422))
+        .andExpect(jsonPath("$.detail").value("Demo error was requested"))
+        .andExpect(jsonPath("$.instance").value(DEMO_ENDPOINT))
         .andExpect(header().exists(REQUEST_ID_HEADER))
-        .andExpect(jsonPath(RESPONSE_REQUEST_ID_PATH).value(requestId));
+        .andExpect(jsonPath("$.requestId").value(requestId));
   }
 }

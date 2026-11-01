@@ -1,10 +1,8 @@
 package com.example.core.exception;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import jakarta.servlet.FilterChain;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,10 +16,6 @@ import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
 class ExceptionHandlingFilterUnitTests {
 
-  private static final String EXCEPTION_MESSAGE = "Test exception";
-  private static final String PARTIAL_CONTENT_TYPE = "text/plain";
-  private static final String PARTIAL_BODY = "partial";
-
   private MockHttpServletRequest request;
   private MockHttpServletResponse response;
   private RuntimeException exception;
@@ -31,7 +25,7 @@ class ExceptionHandlingFilterUnitTests {
   void setUp() {
     request = new MockHttpServletRequest();
     response = new MockHttpServletResponse();
-    exception = new RuntimeException(EXCEPTION_MESSAGE);
+    exception = new RuntimeException("Test exception");
     throwingFilterChain =
         (req, res) -> {
           throw exception;
@@ -39,7 +33,7 @@ class ExceptionHandlingFilterUnitTests {
   }
 
   @Test
-  void doFilterInternal_passesExceptionToResolver_whenFilterChainThrowsException() {
+  void doFilterInternal_shouldPassExceptionToResolver_whenFilterChainThrowsException() {
     // Given
     AtomicReference<Exception> resolvedException = new AtomicReference<>();
     ExceptionHandlingFilter filter =
@@ -51,15 +45,16 @@ class ExceptionHandlingFilterUnitTests {
             new AcceptHeaderLocaleResolver());
 
     // When
-    assertDoesNotThrow(() -> filter.doFilter(request, response, throwingFilterChain));
+    assertThatCode(() -> filter.doFilter(request, response, throwingFilterChain))
+        .doesNotThrowAnyException();
 
     // Then
-    assertSame(exception, resolvedException.get());
-    assertNull(LocaleContextHolder.getLocaleContext());
+    assertThat(resolvedException.get()).isSameAs(exception);
+    assertThat(LocaleContextHolder.getLocaleContext()).isNull();
   }
 
   @Test
-  void doFilterInternal_rethrowsException_whenResolverCannotHandleIt() {
+  void doFilterInternal_shouldRethrowException_whenResolverCannotHandleIt() {
     // Given
     ExceptionHandlingFilter filter =
         new ExceptionHandlingFilter(
@@ -67,15 +62,15 @@ class ExceptionHandlingFilterUnitTests {
 
     // When
     RuntimeException thrown =
-        assertThrows(
+        catchThrowableOfType(
             RuntimeException.class, () -> filter.doFilter(request, response, throwingFilterChain));
 
     // Then
-    assertSame(exception, thrown);
+    assertThat(thrown).isSameAs(exception);
   }
 
   @Test
-  void doFilterInternal_rethrowsExceptionWithoutResolving_whenResponseIsCommitted() {
+  void doFilterInternal_shouldRethrowExceptionWithoutResolving_whenResponseIsCommitted() {
     // Given
     AtomicReference<Exception> resolvedException = new AtomicReference<>();
     ExceptionHandlingFilter filter =
@@ -89,16 +84,16 @@ class ExceptionHandlingFilterUnitTests {
 
     // When
     RuntimeException thrown =
-        assertThrows(
+        catchThrowableOfType(
             RuntimeException.class, () -> filter.doFilter(request, response, throwingFilterChain));
 
     // Then
-    assertSame(exception, thrown);
-    assertNull(resolvedException.get());
+    assertThat(thrown).isSameAs(exception);
+    assertThat(resolvedException.get()).isNull();
   }
 
   @Test
-  void doFilterInternal_clearsPartialResponse_beforeResolvingException() {
+  void doFilterInternal_shouldClearPartialResponse_beforeResolvingException() {
     // Given
     AtomicReference<String> contentTypeAtResolution = new AtomicReference<>();
     AtomicReference<Integer> bufferedBytesAtResolution = new AtomicReference<>();
@@ -112,16 +107,17 @@ class ExceptionHandlingFilterUnitTests {
             new AcceptHeaderLocaleResolver());
     FilterChain partiallyWritingFilterChain =
         (req, res) -> {
-          res.setContentType(PARTIAL_CONTENT_TYPE);
-          res.getWriter().write(PARTIAL_BODY);
+          res.setContentType("text/plain");
+          res.getWriter().write("partial");
           throw exception;
         };
 
     // When
-    assertDoesNotThrow(() -> filter.doFilter(request, response, partiallyWritingFilterChain));
+    assertThatCode(() -> filter.doFilter(request, response, partiallyWritingFilterChain))
+        .doesNotThrowAnyException();
 
     // Then
-    assertNull(contentTypeAtResolution.get());
-    assertEquals(0, bufferedBytesAtResolution.get());
+    assertThat(contentTypeAtResolution.get()).isNull();
+    assertThat(bufferedBytesAtResolution.get()).isEqualTo(0);
   }
 }

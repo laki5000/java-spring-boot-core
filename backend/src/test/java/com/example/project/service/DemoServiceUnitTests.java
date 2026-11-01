@@ -1,7 +1,7 @@
 package com.example.project.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DemoServiceUnitTests {
 
   private static final String DEMO_RUNNING_MESSAGE = "Demo is running";
-  private static final String DEMO_ERROR_MESSAGE = "Demo error was requested";
   private static final String DEMO_RUNNING_MESSAGE_KEY = "demo.running";
 
   @Mock private I18nService i18nService;
@@ -30,7 +29,7 @@ class DemoServiceUnitTests {
   }
 
   @Test
-  void testGetDemoMessage_shouldReturnRunningMessage_whenErrorIsFalse() {
+  void getDemoMessage_shouldReturnRunningMessage_whenErrorIsFalse() {
     // Given
     when(i18nService.getMessage(DEMO_RUNNING_MESSAGE_KEY)).thenReturn(DEMO_RUNNING_MESSAGE);
 
@@ -38,21 +37,20 @@ class DemoServiceUnitTests {
     String result = demoService.getDemoMessage(false);
 
     // Then
-    assertEquals(DEMO_RUNNING_MESSAGE, result);
+    assertThat(result).isEqualTo(DEMO_RUNNING_MESSAGE);
     verify(i18nService).getMessage(DEMO_RUNNING_MESSAGE_KEY);
   }
 
   @Test
-  void testGetDemoMessage_shouldThrowException_whenErrorIsTrue() {
+  void getDemoMessage_shouldThrowException_whenErrorIsTrue() {
     // When / Then
-    DemoException exception =
-        assertThrows(DemoException.class, () -> demoService.getDemoMessage(true));
-
-    assertEquals(DEMO_ERROR_MESSAGE, exception.getMessage());
+    assertThatThrownBy(() -> demoService.getDemoMessage(true))
+        .isInstanceOf(DemoException.class)
+        .hasMessage("Demo error was requested");
   }
 
   @Test
-  void testGetDemoMessage_shouldReturnRunningMessage_whenErrorIsNull() {
+  void getDemoMessage_shouldReturnRunningMessage_whenErrorIsNull() {
     // Given
     when(i18nService.getMessage(DEMO_RUNNING_MESSAGE_KEY)).thenReturn(DEMO_RUNNING_MESSAGE);
 
@@ -60,7 +58,7 @@ class DemoServiceUnitTests {
     String result = demoService.getDemoMessage(null);
 
     // Then
-    assertEquals(DEMO_RUNNING_MESSAGE, result);
+    assertThat(result).isEqualTo(DEMO_RUNNING_MESSAGE);
     verify(i18nService).getMessage(DEMO_RUNNING_MESSAGE_KEY);
   }
 }
