@@ -27,6 +27,10 @@ jobs:
     needs: build
     uses: ./.github/workflows/integration-tests.yml
 
+  architecture-tests:
+    needs: build
+    uses: ./.github/workflows/architecture-tests.yml
+
   coverage:
     needs:
       - unit-tests

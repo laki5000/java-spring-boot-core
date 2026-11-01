@@ -1,0 +1,29 @@
+name: Architecture Tests
+
+on:
+  workflow_call:
+
+jobs:
+  architecture-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'corretto'
+          cache: maven
+
+      - name: Download build output
+        uses: actions/download-artifact@v5
+        with:
+          name: backend-build
+          path: backend/target
+
+      - name: Run architecture tests
+        working-directory: backend
+        run: ./mvnw -B surefire:test -Parchitecture-tests
