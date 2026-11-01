@@ -1,7 +1,7 @@
 package com.example.core.exception;
 
+import com.example.core.filter.RequestIdFilter;
 import com.example.core.logging.LogSanitizer;
-import com.example.core.web.RequestIdFilter;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;

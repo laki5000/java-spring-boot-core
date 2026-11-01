@@ -1,4 +1,4 @@
-package com.example.core.web;
+package com.example.core.filter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

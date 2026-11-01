@@ -1,4 +1,4 @@
-package com.example.core.web;
+package com.example.core.message;
 
 import java.util.List;
 import java.util.Locale;

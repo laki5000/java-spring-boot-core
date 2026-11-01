@@ -1,4 +1,4 @@
-package com.example.core.web;
+package com.example.core.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

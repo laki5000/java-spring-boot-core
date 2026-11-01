@@ -1,4 +1,4 @@
-package com.example.core.web;
+package com.example.core.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
