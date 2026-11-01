@@ -1,3 +1,6 @@
 logging:
+  structured:
+    format:
+      console: ""
   level:
     com.example: DEBUG

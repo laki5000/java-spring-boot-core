@@ -8,6 +8,9 @@ spring:
 logging:
   pattern:
     correlation: "[%X{requestId:-}] "
+  structured:
+    format:
+      console: ecs
 
 app:
   locale:
