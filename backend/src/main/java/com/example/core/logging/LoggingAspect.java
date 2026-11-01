@@ -9,6 +9,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
@@ -28,9 +29,15 @@ public class LoggingAspect {
       throws Throwable {
 
     Logger logger = LoggerFactory.getLogger(ClassUtils.getUserClass(joinPoint.getTarget()));
+    Level level = toSlf4jLevel(logExecution.level());
+
+    if (!logger.isEnabledForLevel(level)) {
+      return joinPoint.proceed();
+    }
+
     String methodName = joinPoint.getSignature().getName();
 
-    logStarted(logger, logExecution, methodName, joinPoint);
+    logStarted(logger, level, logExecution, methodName, joinPoint);
 
     long start = System.currentTimeMillis();
 
@@ -38,13 +45,17 @@ public class LoggingAspect {
 
     long duration = System.currentTimeMillis() - start;
 
-    logCompleted(logger, logExecution, methodName, result, duration);
+    logCompleted(logger, level, logExecution, methodName, result, duration);
 
     return result;
   }
 
   private void logStarted(
-      Logger logger, LogExecution annotation, String methodName, ProceedingJoinPoint joinPoint) {
+      Logger logger,
+      Level level,
+      LogExecution annotation,
+      String methodName,
+      ProceedingJoinPoint joinPoint) {
 
     String message =
         methodName
@@ -53,11 +64,16 @@ public class LoggingAspect {
                 ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, annotation)
                 : "");
 
-    log(logger, annotation.level(), message);
+    logger.atLevel(level).log(message);
   }
 
   private void logCompleted(
-      Logger logger, LogExecution annotation, String methodName, Object result, long duration) {
+      Logger logger,
+      Level level,
+      LogExecution annotation,
+      String methodName,
+      Object result,
+      long duration) {
 
     String message =
         methodName
@@ -66,7 +82,7 @@ public class LoggingAspect {
             + MILLISECONDS_SUFFIX
             + (annotation.logResult() ? RESULT_PREFIX + result : "");
 
-    log(logger, annotation.level(), message);
+    logger.atLevel(level).log(message);
   }
 
   private String getArgumentsToLog(ProceedingJoinPoint joinPoint, LogExecution annotation) {
@@ -92,10 +108,10 @@ public class LoggingAspect {
     return index + "=" + name + ": " + value;
   }
 
-  private void log(Logger logger, LogLevel level, String message) {
-    switch (level) {
-      case DEBUG -> logger.debug(message);
-      case INFO -> logger.info(message);
-    }
+  private Level toSlf4jLevel(LogLevel level) {
+    return switch (level) {
+      case DEBUG -> Level.DEBUG;
+      case INFO -> Level.INFO;
+    };
   }
 }

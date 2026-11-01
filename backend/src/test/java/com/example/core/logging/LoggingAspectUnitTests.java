@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.junit.jupiter.api.AfterEach;
@@ -73,8 +75,8 @@ class LoggingAspectUnitTests {
     logger.addAppender(logAppender);
 
     when(joinPoint.getTarget()).thenReturn(this);
-    when(joinPoint.getSignature()).thenReturn(signature);
-    when(signature.getName()).thenReturn(METHOD_NAME);
+    lenient().when(joinPoint.getSignature()).thenReturn(signature);
+    lenient().when(signature.getName()).thenReturn(METHOD_NAME);
   }
 
   @AfterEach
@@ -100,6 +102,38 @@ class LoggingAspectUnitTests {
     assertEquals(2, logAppender.list.size());
     assertStartedLog(logAppender.list.getFirst());
     assertCompletedLog(logAppender.list.getLast());
+  }
+
+  @Test
+  void testLogExecution_shouldNotFormatArgumentsAndResult_whenLogLevelIsDisabled()
+      throws Throwable {
+    // Given
+    logger.setLevel(Level.INFO);
+    AtomicInteger toStringCalls = new AtomicInteger();
+    Object countingObject =
+        new Object() {
+          @Override
+          public String toString() {
+            toStringCalls.incrementAndGet();
+            return ARGUMENT_2;
+          }
+        };
+
+    when(joinPoint.proceed()).thenReturn(countingObject);
+    when(logExecution.level()).thenReturn(DEBUG);
+    lenient().when(logExecution.logArguments()).thenReturn(true);
+    lenient().when(logExecution.logResult()).thenReturn(true);
+    lenient().when(joinPoint.getArgs()).thenReturn(new Object[] {countingObject});
+    lenient().when(signature.getParameterNames()).thenReturn(new String[] {ARGUMENT_NAME_1});
+    lenient().when(logExecution.argumentIndexes()).thenReturn(new int[0]);
+
+    // When
+    Object result = loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    assertEquals(countingObject, result);
+    assertTrue(logAppender.list.isEmpty());
+    assertEquals(0, toStringCalls.get());
   }
 
   @Test
