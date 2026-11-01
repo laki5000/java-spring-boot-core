@@ -1,11 +1,8 @@
 openapi: 3.0.3
 
 info:
-  title: Demo
+  title: Java Spring Boot Core API
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8080
 
 paths:
   /api/v1/demo:

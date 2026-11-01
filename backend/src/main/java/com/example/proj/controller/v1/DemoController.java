@@ -15,9 +15,6 @@ public class DemoController implements DemoApi {
 
   @Override
   public ResponseEntity<ApiResponseString> getDemo(Boolean error) {
-    ApiResponseString response = new ApiResponseString();
-    response.setData(demoService.getDemoMessage(error));
-
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponseString(demoService.getDemoMessage(error)));
   }
 }

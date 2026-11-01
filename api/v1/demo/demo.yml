@@ -19,6 +19,9 @@ get:
           schema:
             $ref: '../components/schemas/api-response-string.yml'
 
+    '400':
+      $ref: '../components/responses/bad-request.yml'
+
     '422':
       description: Demo error was requested
       content:
@@ -27,8 +30,4 @@ get:
             $ref: '../components/schemas/problem-detail.yml'
 
     '500':
-      description: Internal server error
-      content:
-        application/problem+json:
-          schema:
-            $ref: '../components/schemas/problem-detail.yml'
+      $ref: '../components/responses/internal-server-error.yml'
