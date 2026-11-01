@@ -8,7 +8,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
-import org.slf4j.event.Level;
 import org.springframework.stereotype.Component;
 
 @Aspect
@@ -96,11 +95,10 @@ public class LoggingAspect {
     return index + "=" + name + ": " + value;
   }
 
-  private void log(Level level, String message) {
+  private void log(LogLevel level, String message) {
     switch (level) {
       case DEBUG -> log.debug(message);
       case INFO -> log.info(message);
-      default -> throw new IllegalArgumentException("Unsupported logging level: " + level);
     }
   }
 }

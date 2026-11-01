@@ -1,13 +1,13 @@
 package com.example.core.logging;
 
+import static com.example.core.logging.LogLevel.DEBUG;
+import static com.example.core.logging.LogLevel.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.slf4j.event.Level.DEBUG;
-import static org.slf4j.event.Level.INFO;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
