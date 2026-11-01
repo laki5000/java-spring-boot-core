@@ -1,6 +1,5 @@
 package com.example.core.message;
 
-import com.example.core.logging.LogExecution;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -13,7 +12,6 @@ public class I18nService {
 
   private final MessageSource messageSource;
 
-  @LogExecution(logArguments = true, logResult = true)
   public String getMessage(String key) {
     Locale locale = LocaleContextHolder.getLocale();
 

@@ -4,7 +4,3 @@ spring:
   messages:
     basename: messages/messages
     fallback-to-system-locale: false
-
-logging:
-  level:
-    com.example: DEBUG
