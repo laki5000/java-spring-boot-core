@@ -50,6 +50,9 @@ class LoggingAspectUnitTests {
   private static final String INTERFACE_METHOD = "process";
   private static final String REDACTED_VALUE = "1=value: [REDACTED]";
   private static final String PLAIN_VALUE = "1=value: test";
+  private static final int MAX_VALUE_LENGTH = 500;
+  private static final int LONG_VALUE_LENGTH = 600;
+  private static final String TRUNCATED_MARKER = "...(+100 chars)";
 
   private static final String STARTED = "testMethod started";
   private static final String COMPLETED_PREFIX = "testMethod completed in ";
@@ -261,6 +264,29 @@ class LoggingAspectUnitTests {
 
     assertTrue(message.contains(REDACTED_VALUE));
     assertFalse(message.contains(PLAIN_VALUE));
+  }
+
+  @Test
+  void testLogExecution_shouldTruncateLongArgumentsAndResult() throws Throwable {
+    // Given
+    String longValue = "x".repeat(LONG_VALUE_LENGTH);
+
+    when(joinPoint.getArgs()).thenReturn(new Object[] {ARGUMENT_1, longValue, ARGUMENT_3});
+    when(joinPoint.proceed()).thenReturn(longValue);
+    when(signature.getMethod()).thenReturn(getSampleMethod(SAMPLE_METHOD));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(true);
+    when(logExecution.logResult()).thenReturn(true);
+
+    // When
+    loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    String truncatedValue = "x".repeat(MAX_VALUE_LENGTH) + TRUNCATED_MARKER;
+
+    assertTrue(getLogMessage(0).contains("1=second: " + truncatedValue));
+    assertTrue(getLogMessage(1).contains(RESULT_PREFIX + truncatedValue));
+    assertFalse(getLogMessage(1).contains(longValue));
   }
 
   @Test

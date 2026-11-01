@@ -27,6 +27,9 @@ public class LoggingAspect {
   private static final String RESULT_PREFIX = " | result=";
   private static final String EXCEPTION_PREFIX = " | exception=";
   private static final String REDACTED = "[REDACTED]";
+  private static final int MAX_VALUE_LENGTH = 500;
+  private static final String TRUNCATED_PREFIX = "...(+";
+  private static final String TRUNCATED_SUFFIX = " chars)";
 
   @Around("@annotation(logExecution)")
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
@@ -93,7 +96,7 @@ public class LoggingAspect {
             + COMPLETED_IN
             + duration
             + MILLISECONDS_SUFFIX
-            + (annotation.logResult() ? RESULT_PREFIX + result : "");
+            + (annotation.logResult() ? RESULT_PREFIX + truncate(result) : "");
 
     logger.atLevel(level).log(message);
   }
@@ -127,7 +130,20 @@ public class LoggingAspect {
   }
 
   private String formatArgument(int index, String name, Object value) {
-    return index + "=" + name + ": " + value;
+    return index + "=" + name + ": " + truncate(value);
+  }
+
+  private String truncate(Object value) {
+    String text = String.valueOf(value);
+
+    if (text.length() <= MAX_VALUE_LENGTH) {
+      return text;
+    }
+
+    return text.substring(0, MAX_VALUE_LENGTH)
+        + TRUNCATED_PREFIX
+        + (text.length() - MAX_VALUE_LENGTH)
+        + TRUNCATED_SUFFIX;
   }
 
   private long getElapsedMillis(long startNanos) {
