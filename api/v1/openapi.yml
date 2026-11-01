@@ -4,6 +4,10 @@ info:
   title: Java Spring Boot Core API
   version: 1.0.0
 
+servers:
+  - url: http://localhost:8080
+    description: Local
+
 paths:
   /api/v1/demo:
     $ref: './demo/demo.yml'

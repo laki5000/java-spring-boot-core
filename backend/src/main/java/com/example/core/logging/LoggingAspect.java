@@ -1,6 +1,7 @@
 package com.example.core.logging;
 
 import java.lang.reflect.Parameter;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -34,6 +35,10 @@ public class LoggingAspect {
   private static final String ESCAPED_CARRIAGE_RETURN = "\\r";
   private static final String LINE_FEED = "\n";
   private static final String ESCAPED_LINE_FEED = "\\n";
+  private static final String NULL_TEXT = "null";
+  private static final String TO_STRING_FAILED_PREFIX = "[";
+  private static final String TO_STRING_FAILED_SEPARATOR = ", toString failed: ";
+  private static final String TO_STRING_FAILED_SUFFIX = "]";
 
   @Around("@annotation(logExecution)")
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
@@ -144,7 +149,7 @@ public class LoggingAspect {
 
   private String formatValue(Object value) {
     String text =
-        String.valueOf(value)
+        toText(value)
             .replace(CARRIAGE_RETURN, ESCAPED_CARRIAGE_RETURN)
             .replace(LINE_FEED, ESCAPED_LINE_FEED);
 
@@ -156,6 +161,18 @@ public class LoggingAspect {
         + TRUNCATED_PREFIX
         + (text.length() - MAX_VALUE_LENGTH)
         + TRUNCATED_SUFFIX;
+  }
+
+  private String toText(Object value) {
+    try {
+      return Objects.requireNonNullElse(String.valueOf(value), NULL_TEXT);
+    } catch (RuntimeException exception) {
+      return TO_STRING_FAILED_PREFIX
+          + ClassUtils.getShortName(ClassUtils.getUserClass(value))
+          + TO_STRING_FAILED_SEPARATOR
+          + ClassUtils.getShortName(exception.getClass())
+          + TO_STRING_FAILED_SUFFIX;
+    }
   }
 
   private long getElapsedMillis(long startNanos) {

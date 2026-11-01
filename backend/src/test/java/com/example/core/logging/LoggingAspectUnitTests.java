@@ -61,6 +61,11 @@ class LoggingAspectUnitTests {
   private static final int LINE_FEED_COUNT = 300;
   private static final String MULTILINE_VALUE = "Bob\r\nINFO fake log line";
   private static final String ESCAPED_MULTILINE_VALUE = "Bob\\r\\nINFO fake log line";
+  private static final String NULL_TEXT = "null";
+  private static final String FAILED_TO_STRING_VALUE =
+      "[LoggingAspectUnitTests.FailingToStringValue, toString failed: IllegalStateException]";
+  private static final String FAILED_TO_STRING_EXCEPTION =
+      "[LoggingAspectUnitTests.FailingToStringException, toString failed: IllegalStateException]";
 
   private static final String STARTED = "testMethod started";
   private static final String COMPLETED_PREFIX = "testMethod completed in ";
@@ -382,6 +387,69 @@ class LoggingAspectUnitTests {
   }
 
   @Test
+  void testLogExecution_shouldKeepResult_whenArgumentOrResultToStringFails() throws Throwable {
+    // Given
+    FailingToStringValue failingValue = new FailingToStringValue();
+
+    when(joinPoint.getArgs()).thenReturn(new Object[] {ARGUMENT_1, failingValue, ARGUMENT_3});
+    when(joinPoint.proceed()).thenReturn(failingValue);
+    when(signature.getMethod()).thenReturn(getSampleMethod(SAMPLE_METHOD));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(true);
+    when(logExecution.logResult()).thenReturn(true);
+
+    // When
+    Object result = loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    assertSame(failingValue, result);
+    assertTrue(getLogMessage(0).contains("1=second: " + FAILED_TO_STRING_VALUE));
+    assertTrue(getLogMessage(1).contains(RESULT_PREFIX + FAILED_TO_STRING_VALUE));
+  }
+
+  @Test
+  void testLogExecution_shouldKeepResult_whenArgumentOrResultToStringReturnsNull()
+      throws Throwable {
+    // Given
+    NullToStringValue nullValue = new NullToStringValue();
+
+    when(joinPoint.getArgs()).thenReturn(new Object[] {ARGUMENT_1, nullValue, ARGUMENT_3});
+    when(joinPoint.proceed()).thenReturn(nullValue);
+    when(signature.getMethod()).thenReturn(getSampleMethod(SAMPLE_METHOD));
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(true);
+    when(logExecution.logResult()).thenReturn(true);
+
+    // When
+    Object result = loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    assertSame(nullValue, result);
+    assertTrue(getLogMessage(0).contains("1=second: " + NULL_TEXT));
+    assertTrue(getLogMessage(1).endsWith(RESULT_PREFIX + NULL_TEXT));
+  }
+
+  @Test
+  void testLogExecution_shouldPropagateOriginalException_whenExceptionToStringFails()
+      throws Throwable {
+    // Given
+    FailingToStringException expectedException = new FailingToStringException();
+
+    when(joinPoint.proceed()).thenThrow(expectedException);
+    when(logExecution.level()).thenReturn(DEBUG);
+
+    // When
+    FailingToStringException actualException =
+        assertThrows(
+            FailingToStringException.class,
+            () -> loggingAspect.logExecution(joinPoint, logExecution));
+
+    // Then
+    assertSame(expectedException, actualException);
+    assertTrue(getLogMessage(1).endsWith(EXCEPTION_PREFIX + FAILED_TO_STRING_EXCEPTION));
+  }
+
+  @Test
   void testLogExecution_shouldNotLogArguments_whenArgumentLoggingIsDisabled() throws Throwable {
     // Given
     when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
@@ -477,6 +545,27 @@ class LoggingAspectUnitTests {
   static class SampleImplementation implements SampleInterface<String> {
     @Override
     public void process(String name, @Redacted String value) {}
+  }
+
+  static class FailingToStringValue {
+    @Override
+    public String toString() {
+      throw new IllegalStateException();
+    }
+  }
+
+  static class NullToStringValue {
+    @Override
+    public String toString() {
+      return null;
+    }
+  }
+
+  static class FailingToStringException extends RuntimeException {
+    @Override
+    public String toString() {
+      throw new IllegalStateException();
+    }
   }
 
   private String getLogMessage(int index) {
