@@ -152,6 +152,16 @@
 						<googleJavaFormat/>
 					</java>
 				</configuration>
+
+				<executions>
+					<execution>
+						<id>check-format</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -168,7 +178,19 @@
 
 				<executions>
 					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+						<configuration>
+							<destFile>${project.build.directory}/coverage/unit/jacoco.exec</destFile>
+							<append>false</append>
+						</configuration>
+					</execution>
+
+					<execution>
 						<id>merge</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>merge</goal>
 						</goals>
@@ -192,7 +214,19 @@
 					</execution>
 
 					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+						</configuration>
+					</execution>
+
+					<execution>
 						<id>check</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
