@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
@@ -23,12 +24,12 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       FilterChain filterChain)
       throws ServletException, IOException {
 
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
 
     try {
       filterChain.doFilter(request, response);
     } finally {
-      long duration = System.currentTimeMillis() - start;
+      long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
       log.info(
           REQUEST_LOG_FORMAT,

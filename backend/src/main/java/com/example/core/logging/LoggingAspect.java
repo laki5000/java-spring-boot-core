@@ -1,6 +1,7 @@
 package com.example.core.logging;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -41,18 +42,18 @@ public class LoggingAspect {
 
     logStarted(logger, level, logExecution, methodName, joinPoint);
 
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
 
     Object result;
 
     try {
       result = joinPoint.proceed();
     } catch (Throwable throwable) {
-      logFailed(logger, level, methodName, throwable, System.currentTimeMillis() - start);
+      logFailed(logger, level, methodName, throwable, getElapsedMillis(start));
       throw throwable;
     }
 
-    long duration = System.currentTimeMillis() - start;
+    long duration = getElapsedMillis(start);
 
     logCompleted(logger, level, logExecution, methodName, result, duration);
 
@@ -124,6 +125,10 @@ public class LoggingAspect {
 
   private String formatArgument(int index, String name, Object value) {
     return index + "=" + name + ": " + value;
+  }
+
+  private long getElapsedMillis(long startNanos) {
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
   }
 
   private Level toSlf4jLevel(LogLevel level) {
