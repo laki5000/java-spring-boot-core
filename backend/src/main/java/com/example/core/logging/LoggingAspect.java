@@ -3,16 +3,17 @@ package com.example.core.logging;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ClassUtils;
 
 @Aspect
 @Component
-@Slf4j
 public class LoggingAspect {
 
   private static final String STARTED = " started";
@@ -26,10 +27,10 @@ public class LoggingAspect {
   public Object logExecution(ProceedingJoinPoint joinPoint, LogExecution logExecution)
       throws Throwable {
 
-    String className = joinPoint.getTarget().getClass().getSimpleName();
+    Logger logger = LoggerFactory.getLogger(ClassUtils.getUserClass(joinPoint.getTarget()));
     String methodName = joinPoint.getSignature().getName();
 
-    logStarted(logExecution, className, methodName, joinPoint);
+    logStarted(logger, logExecution, methodName, joinPoint);
 
     long start = System.currentTimeMillis();
 
@@ -37,39 +38,35 @@ public class LoggingAspect {
 
     long duration = System.currentTimeMillis() - start;
 
-    logCompleted(logExecution, className, methodName, result, duration);
+    logCompleted(logger, logExecution, methodName, result, duration);
 
     return result;
   }
 
   private void logStarted(
-      LogExecution annotation, String className, String methodName, ProceedingJoinPoint joinPoint) {
+      Logger logger, LogExecution annotation, String methodName, ProceedingJoinPoint joinPoint) {
 
     String message =
-        className
-            + "."
-            + methodName
+        methodName
             + STARTED
             + (annotation.logArguments()
                 ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, annotation)
                 : "");
 
-    log(annotation.level(), message);
+    log(logger, annotation.level(), message);
   }
 
   private void logCompleted(
-      LogExecution annotation, String className, String methodName, Object result, long duration) {
+      Logger logger, LogExecution annotation, String methodName, Object result, long duration) {
 
     String message =
-        className
-            + "."
-            + methodName
+        methodName
             + COMPLETED_IN
             + duration
             + MILLISECONDS_SUFFIX
             + (annotation.logResult() ? RESULT_PREFIX + result : "");
 
-    log(annotation.level(), message);
+    log(logger, annotation.level(), message);
   }
 
   private String getArgumentsToLog(ProceedingJoinPoint joinPoint, LogExecution annotation) {
@@ -95,10 +92,10 @@ public class LoggingAspect {
     return index + "=" + name + ": " + value;
   }
 
-  private void log(LogLevel level, String message) {
+  private void log(Logger logger, LogLevel level, String message) {
     switch (level) {
-      case DEBUG -> log.debug(message);
-      case INFO -> log.info(message);
+      case DEBUG -> logger.debug(message);
+      case INFO -> logger.info(message);
     }
   }
 }

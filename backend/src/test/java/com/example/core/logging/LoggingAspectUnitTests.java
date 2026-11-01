@@ -44,8 +44,8 @@ class LoggingAspectUnitTests {
   private static final String EXPECTED_ARGUMENT_3 = "2=third: true";
   private static final String REDACTED_ARGUMENT_2 = "1=second: [REDACTED]";
 
-  private static final String STARTED = "LoggingAspectUnitTests.testMethod started";
-  private static final String COMPLETED_PREFIX = "LoggingAspectUnitTests.testMethod completed in ";
+  private static final String STARTED = "testMethod started";
+  private static final String COMPLETED_PREFIX = "testMethod completed in ";
   private static final String MILLISECONDS_SUFFIX = " ms";
   private static final String ARGUMENTS_PREFIX = "arguments=";
   private static final String RESULT_PREFIX = "result=";
@@ -65,7 +65,7 @@ class LoggingAspectUnitTests {
   void setUp() {
     loggingAspect = new LoggingAspect();
 
-    logger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+    logger = (Logger) LoggerFactory.getLogger(LoggingAspectUnitTests.class);
     logger.setLevel(Level.DEBUG);
 
     logAppender = new ListAppender<>();
@@ -100,6 +100,22 @@ class LoggingAspectUnitTests {
     assertEquals(2, logAppender.list.size());
     assertStartedLog(logAppender.list.getFirst());
     assertCompletedLog(logAppender.list.getLast());
+  }
+
+  @Test
+  void testLogExecution_shouldLogWithTargetClassLogger() throws Throwable {
+    // Given
+    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
+    when(logExecution.level()).thenReturn(DEBUG);
+    when(logExecution.logArguments()).thenReturn(false);
+    when(logExecution.logResult()).thenReturn(false);
+
+    // When
+    loggingAspect.logExecution(joinPoint, logExecution);
+
+    // Then
+    assertEquals(
+        LoggingAspectUnitTests.class.getName(), logAppender.list.getFirst().getLoggerName());
   }
 
   @Test
