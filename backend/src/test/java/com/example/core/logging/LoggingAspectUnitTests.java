@@ -4,6 +4,8 @@ import static com.example.core.logging.LogLevel.DEBUG;
 import static com.example.core.logging.LogLevel.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
@@ -48,6 +50,8 @@ class LoggingAspectUnitTests {
 
   private static final String STARTED = "testMethod started";
   private static final String COMPLETED_PREFIX = "testMethod completed in ";
+  private static final String FAILED_PREFIX = "testMethod failed after ";
+  private static final String EXCEPTION_PREFIX = "exception=";
   private static final String MILLISECONDS_SUFFIX = " ms";
   private static final String ARGUMENTS_PREFIX = "arguments=";
   private static final String RESULT_PREFIX = "result=";
@@ -153,7 +157,7 @@ class LoggingAspectUnitTests {
   }
 
   @Test
-  void testLogExecution_shouldPropagateExceptionFromProceed() throws Throwable {
+  void testLogExecution_shouldLogFailedAndPropagateException_whenProceedThrows() throws Throwable {
     // Given
     RuntimeException expectedException = new RuntimeException(EXCEPTION_MESSAGE);
 
@@ -165,11 +169,19 @@ class LoggingAspectUnitTests {
         assertThrows(
             RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
 
-    assertEquals(expectedException, actualException);
+    assertSame(expectedException, actualException);
     verify(joinPoint).proceed();
 
-    assertEquals(1, logAppender.list.size());
+    assertEquals(2, logAppender.list.size());
     assertStartedLog(logAppender.list.getFirst());
+
+    String failedMessage = getLogMessage(1);
+
+    assertTrue(failedMessage.contains(FAILED_PREFIX));
+    assertTrue(failedMessage.contains(MILLISECONDS_SUFFIX));
+    assertTrue(failedMessage.contains(EXCEPTION_PREFIX + expectedException));
+    assertEquals(Level.DEBUG, logAppender.list.get(1).getLevel());
+    assertNull(logAppender.list.get(1).getThrowableProxy());
   }
 
   @Test

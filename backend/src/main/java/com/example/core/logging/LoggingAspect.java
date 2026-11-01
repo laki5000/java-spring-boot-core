@@ -19,9 +19,11 @@ public class LoggingAspect {
 
   private static final String STARTED = " started";
   private static final String COMPLETED_IN = " completed in ";
+  private static final String FAILED_AFTER = " failed after ";
   private static final String MILLISECONDS_SUFFIX = " ms";
   private static final String ARGUMENTS_PREFIX = " | arguments=";
   private static final String RESULT_PREFIX = " | result=";
+  private static final String EXCEPTION_PREFIX = " | exception=";
   private static final String REDACTED = "[REDACTED]";
 
   @Around("@annotation(logExecution)")
@@ -41,7 +43,14 @@ public class LoggingAspect {
 
     long start = System.currentTimeMillis();
 
-    Object result = joinPoint.proceed();
+    Object result;
+
+    try {
+      result = joinPoint.proceed();
+    } catch (Throwable throwable) {
+      logFailed(logger, level, methodName, throwable, System.currentTimeMillis() - start);
+      throw throwable;
+    }
 
     long duration = System.currentTimeMillis() - start;
 
@@ -81,6 +90,15 @@ public class LoggingAspect {
             + duration
             + MILLISECONDS_SUFFIX
             + (annotation.logResult() ? RESULT_PREFIX + result : "");
+
+    logger.atLevel(level).log(message);
+  }
+
+  private void logFailed(
+      Logger logger, Level level, String methodName, Throwable throwable, long duration) {
+
+    String message =
+        methodName + FAILED_AFTER + duration + MILLISECONDS_SUFFIX + EXCEPTION_PREFIX + throwable;
 
     logger.atLevel(level).log(message);
   }
