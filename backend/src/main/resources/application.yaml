@@ -4,7 +4,6 @@ spring:
   messages:
     basename: messages/messages
     fallback-to-system-locale: false
-    use-code-as-default-message: true
 
 logging:
   level:

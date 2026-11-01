@@ -1,6 +1,7 @@
 package com.example.proj.controller.v1;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -19,9 +21,12 @@ class DemoControllerIntegrationTests {
   private static final String TRUE_VALUE = "true";
   private static final String FALSE_VALUE = "false";
   private static final String RESPONSE_DATA_PATH = "$.data";
-  private static final String RESPONSE_MESSAGE_PATH = "$.message";
+  private static final String RESPONSE_TITLE_PATH = "$.title";
+  private static final String RESPONSE_STATUS_PATH = "$.status";
+  private static final String RESPONSE_DETAIL_PATH = "$.detail";
+  private static final String RESPONSE_INSTANCE_PATH = "$.instance";
   private static final String EXPECTED_RUNNING_MESSAGE = "Core application is running";
-  private static final String EXPECTED_EXCEPTION_MESSAGE = "Unexpected error occurred";
+  private static final String EXPECTED_INTERNAL_SERVER_ERROR_TITLE = "Internal Server Error";
 
   @Autowired private MockMvc mockMvc;
 
@@ -48,13 +53,15 @@ class DemoControllerIntegrationTests {
   }
 
   @Test
-  void testGetDemo_shouldReturnApiErrorResponse_whenErrorIsTrue() throws Exception {
-    // Given
-
+  void testGetDemo_shouldReturnProblemDetailWithoutDetail_whenErrorIsTrue() throws Exception {
     // When / Then
     mockMvc
         .perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, TRUE_VALUE))
         .andExpect(status().isInternalServerError())
-        .andExpect(jsonPath(RESPONSE_MESSAGE_PATH).value(EXPECTED_EXCEPTION_MESSAGE));
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath(RESPONSE_TITLE_PATH).value(EXPECTED_INTERNAL_SERVER_ERROR_TITLE))
+        .andExpect(jsonPath(RESPONSE_STATUS_PATH).value(500))
+        .andExpect(jsonPath(RESPONSE_INSTANCE_PATH).value(DEMO_ENDPOINT))
+        .andExpect(jsonPath(RESPONSE_DETAIL_PATH).doesNotExist());
   }
 }

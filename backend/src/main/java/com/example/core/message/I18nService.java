@@ -17,6 +17,6 @@ public class I18nService {
   public String getMessage(String key) {
     Locale locale = LocaleContextHolder.getLocale();
 
-    return messageSource.getMessage(key, null, locale);
+    return messageSource.getMessage(key, null, key, locale);
   }
 }

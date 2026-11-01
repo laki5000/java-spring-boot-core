@@ -1,84 +1,91 @@
 package com.example.proj.exception;
 
-import com.example.core.message.I18nService;
-import com.example.generated.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
-import lombok.RequiredArgsConstructor;
+import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @Slf4j
 @RestControllerAdvice
-@RequiredArgsConstructor
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-  private static final String UNEXPECTED_ERROR_MESSAGE = "error.unexpected";
-  private static final String BAD_REQUEST_ERROR_MESSAGE = "error.bad-request";
-  private static final String NOT_FOUND_ERROR_MESSAGE = "error.not-found";
-  private static final String METHOD_NOT_ALLOWED_ERROR_MESSAGE = "error.method-not-allowed";
-  private static final String UNSUPPORTED_MEDIA_TYPE_ERROR_MESSAGE = "error.unsupported-media-type";
+  private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
+  private static final String TITLE_MESSAGE_PREFIX = "error.title.";
 
-  private final I18nService i18nService;
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<Object> handleConstraintViolation(
+      ConstraintViolationException exception, WebRequest request) {
 
-  @ExceptionHandler({
-    MethodArgumentNotValidException.class,
-    HandlerMethodValidationException.class,
-    ConstraintViolationException.class,
-    HttpMessageNotReadableException.class
-  })
-  public ResponseEntity<ApiErrorResponse> handleBadRequest(Exception exception) {
-    log.warn("Bad request", exception);
-
-    return createResponse(HttpStatus.BAD_REQUEST, BAD_REQUEST_ERROR_MESSAGE);
-  }
-
-  @ExceptionHandler(NoResourceFoundException.class)
-  public ResponseEntity<ApiErrorResponse> handleNotFound(NoResourceFoundException exception) {
-
-    log.warn("Resource not found", exception);
-
-    return createResponse(HttpStatus.NOT_FOUND, NOT_FOUND_ERROR_MESSAGE);
-  }
-
-  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-  public ResponseEntity<ApiErrorResponse> handleMethodNotAllowed(
-      HttpRequestMethodNotSupportedException exception) {
-
-    log.warn("Method not allowed", exception);
-
-    return createResponse(HttpStatus.METHOD_NOT_ALLOWED, METHOD_NOT_ALLOWED_ERROR_MESSAGE);
-  }
-
-  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-  public ResponseEntity<ApiErrorResponse> handleUnsupportedMediaType(
-      HttpMediaTypeNotSupportedException exception) {
-
-    log.warn("Unsupported media type", exception);
-
-    return createResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, UNSUPPORTED_MEDIA_TYPE_ERROR_MESSAGE);
+    return handleExceptionInternal(
+        exception, null, HttpHeaders.EMPTY, HttpStatus.BAD_REQUEST, request);
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiErrorResponse> handleException(Exception exception) {
-    log.error("Unexpected exception occurred", exception);
+  public ResponseEntity<Object> handleUnexpectedException(Exception exception, WebRequest request) {
 
-    return createResponse(HttpStatus.INTERNAL_SERVER_ERROR, UNEXPECTED_ERROR_MESSAGE);
+    return handleExceptionInternal(
+        exception, null, HttpHeaders.EMPTY, HttpStatus.INTERNAL_SERVER_ERROR, request);
   }
 
-  private ResponseEntity<ApiErrorResponse> createResponse(HttpStatus status, String messageKey) {
+  @Override
+  protected ResponseEntity<Object> handleExceptionInternal(
+      Exception exception,
+      @Nullable Object body,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
 
-    ApiErrorResponse response = new ApiErrorResponse();
-    response.setMessage(i18nService.getMessage(messageKey));
+    if (status.is5xxServerError()) {
+      log.error("Request failed with status {}", status.value(), exception);
+    } else {
+      log.debug("Request failed with status {}: {}", status.value(), exception.getMessage());
+    }
 
-    return ResponseEntity.status(status).body(response);
+    ProblemDetail problemDetail =
+        body instanceof ProblemDetail existing ? existing : createProblemDetail(exception, status);
+
+    if (status.is5xxServerError()) {
+      problemDetail.setDetail(null);
+    }
+
+    if (hasDefaultType(problemDetail) && problemDetail.getTitle() != null) {
+      problemDetail.setTitle(getLocalizedTitle(status, problemDetail.getTitle()));
+    }
+
+    return super.handleExceptionInternal(exception, problemDetail, headers, status, request);
+  }
+
+  private ProblemDetail createProblemDetail(Exception exception, HttpStatusCode status) {
+    if (exception instanceof ErrorResponse errorResponse) {
+      return errorResponse.updateAndGetBody(getMessageSource(), LocaleContextHolder.getLocale());
+    }
+
+    return ProblemDetail.forStatus(status);
+  }
+
+  private boolean hasDefaultType(ProblemDetail problemDetail) {
+    URI type = problemDetail.getType();
+
+    return type == null || DEFAULT_PROBLEM_TYPE.equals(type);
+  }
+
+  private String getLocalizedTitle(HttpStatusCode status, String defaultTitle) {
+    return getMessageSource()
+        .getMessage(
+            TITLE_MESSAGE_PREFIX + status.value(),
+            null,
+            defaultTitle,
+            LocaleContextHolder.getLocale());
   }
 }

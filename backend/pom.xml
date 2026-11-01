@@ -115,6 +115,10 @@
 							<apiPackage>com.example.generated.api</apiPackage>
 							<modelPackage>com.example.generated.dto</modelPackage>
 
+							<schemaMappings>
+								<schemaMapping>problem-detail=org.springframework.http.ProblemDetail</schemaMapping>
+							</schemaMappings>
+
 							<configOptions>
 								<interfaceOnly>true</interfaceOnly>
 								<useSpringBoot4>true</useSpringBoot4>

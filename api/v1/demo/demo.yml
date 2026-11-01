@@ -22,6 +22,6 @@ get:
     '500':
       description: Internal server error
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: '../components/schemas/api-error-response.yml'
+            $ref: '../components/schemas/problem-detail.yml'
