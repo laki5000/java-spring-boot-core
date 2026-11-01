@@ -1,7 +1,7 @@
-package com.example.proj.exception;
+package com.example.core.exception;
 
 import com.example.core.logging.LogSanitizer;
-import com.example.proj.logging.RequestIdFilter;
+import com.example.core.web.RequestIdFilter;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +26,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
   private static final String TITLE_MESSAGE_PREFIX = "error.title.";
 
-  @ExceptionHandler(DemoException.class)
-  public ResponseEntity<Object> handleDemoException(DemoException exception, WebRequest request) {
+  @ExceptionHandler(BusinessException.class)
+  public ResponseEntity<Object> handleBusinessException(
+      BusinessException exception, WebRequest request) {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage());
 

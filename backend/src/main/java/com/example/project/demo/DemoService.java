@@ -1,9 +1,8 @@
-package com.example.proj.service;
+package com.example.project.demo;
 
 import com.example.core.logging.LogExecution;
 import com.example.core.logging.LogLevel;
 import com.example.core.message.I18nService;
-import com.example.proj.exception.DemoException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

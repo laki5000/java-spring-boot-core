@@ -1,4 +1,4 @@
-package com.example.proj.logging;
+package com.example.core.web;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

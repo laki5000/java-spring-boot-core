@@ -13,47 +13,34 @@ class ArchTests {
 
   private static final String CORE = "com.example.core..";
   private static final String INTEGRATION = "com.example.integration..";
-  private static final String PROJ = "com.example.proj..";
+  private static final String PROJECT = "com.example.project..";
   private static final String GENERATED = "com.example.generated..";
-  private static final String SPRING_WEB = "org.springframework.web..";
-  private static final String SPRING_HTTP = "org.springframework.http..";
-  private static final String SPRING_BOOT_WEB = "org.springframework.boot.web..";
-  private static final String SPRING_BOOT_WEBMVC = "org.springframework.boot.webmvc..";
-  private static final String SERVLET = "jakarta.servlet..";
   private static final String INTEGRATION_TECHNOLOGY = "com.example.integration.(*)..";
 
   @ArchTest
-  static final ArchRule coreShouldNotDependOnOtherLayersOrWeb =
+  static final ArchRule coreShouldNotDependOnOtherLayers =
       noClasses()
           .that()
           .resideInAPackage(CORE)
           .should()
           .dependOnClassesThat()
-          .resideInAnyPackage(
-              INTEGRATION,
-              PROJ,
-              GENERATED,
-              SPRING_WEB,
-              SPRING_HTTP,
-              SPRING_BOOT_WEB,
-              SPRING_BOOT_WEBMVC,
-              SERVLET);
+          .resideInAnyPackage(INTEGRATION, PROJECT, GENERATED);
 
   @ArchTest
-  static final ArchRule integrationShouldNotDependOnProj =
+  static final ArchRule integrationShouldNotDependOnProject =
       noClasses()
           .that()
           .resideInAPackage(INTEGRATION)
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(PROJ)
+          .resideInAPackage(PROJECT)
           .allowEmptyShould(true);
 
   @ArchTest
-  static final ArchRule projShouldNotDependOnIntegration =
+  static final ArchRule projectShouldNotDependOnIntegration =
       noClasses()
           .that()
-          .resideInAPackage(PROJ)
+          .resideInAPackage(PROJECT)
           .should()
           .dependOnClassesThat()
           .resideInAPackage(INTEGRATION);

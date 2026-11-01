@@ -1,4 +1,4 @@
-package com.example.proj.controller.v1;
+package com.example.project.demo;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;

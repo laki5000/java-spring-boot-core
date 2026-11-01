@@ -1,4 +1,4 @@
-package com.example.proj.config;
+package com.example.core.web;
 
 import java.util.List;
 import java.util.Locale;

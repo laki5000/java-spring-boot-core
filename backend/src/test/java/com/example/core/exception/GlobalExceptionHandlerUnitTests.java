@@ -1,4 +1,4 @@
-package com.example.proj.exception;
+package com.example.core.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -43,6 +43,7 @@ class GlobalExceptionHandlerUnitTests {
   private static final String MULTILINE_REASON = "Bob\r\nINFO fake log line";
   private static final String ESCAPED_MULTILINE_REASON = "Bob\\r\\nINFO fake log line";
   private static final int LONG_REASON_LENGTH = 600;
+  private static final String BUSINESS_RULE_MESSAGE = "Business rule violated";
 
   private GlobalExceptionHandler handler;
 
@@ -194,5 +195,22 @@ class GlobalExceptionHandlerUnitTests {
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
 
     assertNull(problemDetail.getProperties());
+  }
+
+  @Test
+  void testHandleBusinessException_shouldReturnUnprocessableContentWithMessageAsDetail() {
+    // Given
+    BusinessException exception = new BusinessException(BUSINESS_RULE_MESSAGE) {};
+
+    // When
+    ResponseEntity<Object> response =
+        handler.handleBusinessException(
+            exception, new ServletWebRequest(new MockHttpServletRequest()));
+
+    // Then
+    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
+
+    assertEquals(HttpStatus.UNPROCESSABLE_CONTENT.value(), problemDetail.getStatus());
+    assertEquals(BUSINESS_RULE_MESSAGE, problemDetail.getDetail());
   }
 }
