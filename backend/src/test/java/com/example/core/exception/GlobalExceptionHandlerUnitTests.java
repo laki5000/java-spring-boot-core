@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.StaticMessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -184,6 +185,22 @@ class GlobalExceptionHandlerUnitTests {
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
 
     assertThat(problemDetail.getProperties()).isNull();
+  }
+
+  @Test
+  void handleException_shouldKeepTitleNull_whenStatusIsUnknown() throws Exception {
+    // Given
+    ResponseStatusException exception = new ResponseStatusException(HttpStatusCode.valueOf(599));
+
+    // When
+    ResponseEntity<Object> response =
+        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+
+    // Then
+    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
+
+    assertThat(problemDetail.getStatus()).isEqualTo(599);
+    assertThat(problemDetail.getTitle()).isNull();
   }
 
   @Test

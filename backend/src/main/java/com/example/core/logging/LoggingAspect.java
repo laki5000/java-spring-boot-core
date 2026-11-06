@@ -19,13 +19,6 @@ import org.springframework.util.ClassUtils;
 @Component
 public class LoggingAspect {
 
-  private static final String STARTED = " started";
-  private static final String COMPLETED_IN = " completed in ";
-  private static final String FAILED_AFTER = " failed after ";
-  private static final String MILLISECONDS_SUFFIX = " ms";
-  private static final String ARGUMENTS_PREFIX = " | arguments=";
-  private static final String RESULT_PREFIX = " | result=";
-  private static final String EXCEPTION_PREFIX = " | exception=";
   private static final String REDACTED = "[REDACTED]";
 
   @Around("@annotation(logExecution)")
@@ -72,9 +65,9 @@ public class LoggingAspect {
 
     String message =
         methodName
-            + STARTED
+            + " started"
             + (annotation.logArguments()
-                ? ARGUMENTS_PREFIX + getArgumentsToLog(joinPoint, targetClass)
+                ? " | arguments=" + getArgumentsToLog(joinPoint, targetClass)
                 : "");
 
     logger.atLevel(level).log(message);
@@ -89,11 +82,8 @@ public class LoggingAspect {
       long duration) {
 
     String message =
-        methodName
-            + COMPLETED_IN
-            + duration
-            + MILLISECONDS_SUFFIX
-            + (annotation.logResult() ? RESULT_PREFIX + LogSanitizer.sanitize(result) : "");
+        "%s completed in %s ms".formatted(methodName, duration)
+            + (annotation.logResult() ? " | result=" + LogSanitizer.sanitize(result) : "");
 
     logger.atLevel(level).log(message);
   }
@@ -102,12 +92,8 @@ public class LoggingAspect {
       Logger logger, Level level, String methodName, Throwable throwable, long duration) {
 
     String message =
-        methodName
-            + FAILED_AFTER
-            + duration
-            + MILLISECONDS_SUFFIX
-            + EXCEPTION_PREFIX
-            + LogSanitizer.sanitize(throwable);
+        "%s failed after %s ms | exception=%s"
+            .formatted(methodName, duration, LogSanitizer.sanitize(throwable));
 
     logger.atLevel(level).log(message);
   }
@@ -132,7 +118,7 @@ public class LoggingAspect {
   }
 
   private String formatArgument(int index, String name, Object value) {
-    return index + "=" + name + ": " + LogSanitizer.sanitize(value);
+    return "%s=%s: %s".formatted(index, name, LogSanitizer.sanitize(value));
   }
 
   private long getElapsedMillis(long startNanos) {

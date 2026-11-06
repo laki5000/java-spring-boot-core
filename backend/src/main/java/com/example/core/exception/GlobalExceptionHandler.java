@@ -81,7 +81,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       problemDetail.setProperty(RequestIdFilter.REQUEST_ID_KEY, requestId);
     }
 
-    if (hasDefaultType(problemDetail) && problemDetail.getTitle() != null) {
+    if (hasDefaultType(problemDetail)) {
       problemDetail.setTitle(getLocalizedTitle(status, problemDetail.getTitle()));
     }
 

@@ -34,7 +34,7 @@ public class ExceptionHandlingFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       @NonNull HttpServletRequest request,
       @NonNull HttpServletResponse response,
-      FilterChain filterChain)
+      @NonNull FilterChain filterChain)
       throws ServletException, IOException {
 
     try {
