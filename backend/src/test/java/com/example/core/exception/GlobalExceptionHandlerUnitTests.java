@@ -36,6 +36,7 @@ class GlobalExceptionHandlerUnitTests {
   private static final String BUSINESS_RULE_MESSAGE = "Business rule violated";
 
   private GlobalExceptionHandler handler;
+  private ServletWebRequest webRequest;
 
   private Logger logger;
   private Level originalLevel;
@@ -49,6 +50,8 @@ class GlobalExceptionHandlerUnitTests {
 
     handler = new GlobalExceptionHandler();
     handler.setMessageSource(messageSource);
+
+    webRequest = new ServletWebRequest(new MockHttpServletRequest());
 
     logger = (Logger) LoggerFactory.getLogger(GlobalExceptionHandler.class);
     originalLevel = logger.getLevel();
@@ -72,9 +75,7 @@ class GlobalExceptionHandlerUnitTests {
     RuntimeException exception = new RuntimeException(INTERNAL_DETAIL);
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleUnexpectedException(
-            exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleUnexpectedException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -89,8 +90,7 @@ class GlobalExceptionHandlerUnitTests {
         new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, INTERNAL_DETAIL);
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -108,8 +108,7 @@ class GlobalExceptionHandlerUnitTests {
         new MissingServletRequestParameterException("error", "Boolean");
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -126,9 +125,7 @@ class GlobalExceptionHandlerUnitTests {
         new ConstraintViolationException("must not be null", Set.of());
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleConstraintViolation(
-            exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleConstraintViolation(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -147,8 +144,7 @@ class GlobalExceptionHandlerUnitTests {
         new ErrorResponseException(HttpStatus.NOT_FOUND, customProblemDetail, null);
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -164,7 +160,7 @@ class GlobalExceptionHandlerUnitTests {
     ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
 
     // When
-    handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    handler.handleException(exception, webRequest);
 
     // Then
     String message = logAppender.list.getFirst().getFormattedMessage();
@@ -178,8 +174,7 @@ class GlobalExceptionHandlerUnitTests {
     ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -193,8 +188,7 @@ class GlobalExceptionHandlerUnitTests {
     ResponseStatusException exception = new ResponseStatusException(HttpStatusCode.valueOf(599));
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleException(exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
@@ -209,9 +203,7 @@ class GlobalExceptionHandlerUnitTests {
     BusinessException exception = new BusinessException(BUSINESS_RULE_MESSAGE) {};
 
     // When
-    ResponseEntity<Object> response =
-        handler.handleBusinessException(
-            exception, new ServletWebRequest(new MockHttpServletRequest()));
+    ResponseEntity<Object> response = handler.handleBusinessException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();

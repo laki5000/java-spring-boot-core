@@ -13,7 +13,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 
 @SpringBootTest(
     classes = I18nService.class,
-    properties = "spring.messages.basename=messages/messages,messages/test-messages")
+    properties = "spring.messages.basename=messages/test-messages,messages/messages")
 @ImportAutoConfiguration(MessageSourceAutoConfiguration.class)
 class MessageSourceIntegrationTests {
 

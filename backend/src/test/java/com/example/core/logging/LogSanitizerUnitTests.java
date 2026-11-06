@@ -50,24 +50,6 @@ class LogSanitizerUnitTests {
   }
 
   @Test
-  void escapeLineBreaks_shouldEscapeCarriageReturnAndLineFeed() {
-    // When
-    String result = LogSanitizer.escapeLineBreaks("Bob\r\nINFO fake log line");
-
-    // Then
-    assertThat(result).isEqualTo("Bob\\r\\nINFO fake log line");
-  }
-
-  @Test
-  void escapeLineBreaks_shouldReturnNull_whenTextIsNull() {
-    // When
-    String result = LogSanitizer.escapeLineBreaks(null);
-
-    // Then
-    assertThat(result).isNull();
-  }
-
-  @Test
   void sanitize_shouldNotTruncate_whenValueHasMaxLength() {
     // Given
     String value = "x".repeat(MAX_VALUE_LENGTH);
@@ -98,6 +80,24 @@ class LogSanitizerUnitTests {
 
     // Then
     assertThat(result).isEqualTo("\\n".repeat(MAX_VALUE_LENGTH / 2) + TRUNCATED_MARKER);
+  }
+
+  @Test
+  void escapeLineBreaks_shouldEscapeCarriageReturnAndLineFeed() {
+    // When
+    String result = LogSanitizer.escapeLineBreaks("Bob\r\nINFO fake log line");
+
+    // Then
+    assertThat(result).isEqualTo("Bob\\r\\nINFO fake log line");
+  }
+
+  @Test
+  void escapeLineBreaks_shouldReturnNull_whenTextIsNull() {
+    // When
+    String result = LogSanitizer.escapeLineBreaks(null);
+
+    // Then
+    assertThat(result).isNull();
   }
 
   static class FailingToStringValue {

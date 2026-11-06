@@ -57,7 +57,7 @@ class RequestLoggingFilterUnitTests {
     // Then
     assertThat(logAppender.list).hasSize(1);
 
-    var logEvent = logAppender.list.getFirst();
+    ILoggingEvent logEvent = logAppender.list.getFirst();
 
     assertThat(logEvent.getLevel()).isEqualTo(Level.INFO);
     assertThat(logEvent.getFormattedMessage()).matches("GET /api/demo -> 404 \\(\\d+ ms\\)");
@@ -80,7 +80,7 @@ class RequestLoggingFilterUnitTests {
     // Then
     assertThat(logAppender.list).hasSize(1);
 
-    var logEvent = logAppender.list.getFirst();
+    ILoggingEvent logEvent = logAppender.list.getFirst();
 
     assertThat(logEvent.getLevel()).isEqualTo(Level.INFO);
     assertThat(logEvent.getFormattedMessage()).matches("GET /api/demo -> 500 \\(\\d+ ms\\)");

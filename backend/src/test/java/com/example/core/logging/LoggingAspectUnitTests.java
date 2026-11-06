@@ -31,8 +31,6 @@ class LoggingAspectUnitTests {
   private static final String EXPECTED_ARGUMENT_2 = "1=second: test";
   private static final String EXPECTED_ARGUMENT_3 = "2=third: true";
 
-  private static final String CARRIAGE_RETURN = "\r";
-  private static final String LINE_FEED = "\n";
   private static final String MULTILINE_VALUE = "Bob\r\nINFO fake log line";
   private static final String ESCAPED_MULTILINE_VALUE = "Bob\\r\\nINFO fake log line";
 
@@ -226,10 +224,12 @@ class LoggingAspectUnitTests {
     String startedMessage = getLogMessage(0);
     String completedMessage = getLogMessage(1);
 
-    assertThat(startedMessage).contains("1=second: " + ESCAPED_MULTILINE_VALUE);
-    assertThat(completedMessage).contains(RESULT_PREFIX + ESCAPED_MULTILINE_VALUE);
-    assertThat(startedMessage).doesNotContain(LINE_FEED).doesNotContain(CARRIAGE_RETURN);
-    assertThat(completedMessage).doesNotContain(LINE_FEED).doesNotContain(CARRIAGE_RETURN);
+    assertThat(startedMessage)
+        .contains("1=second: " + ESCAPED_MULTILINE_VALUE)
+        .doesNotContainPattern("[\\r\\n]");
+    assertThat(completedMessage)
+        .contains(RESULT_PREFIX + ESCAPED_MULTILINE_VALUE)
+        .doesNotContainPattern("[\\r\\n]");
   }
 
   @Test
@@ -241,8 +241,7 @@ class LoggingAspectUnitTests {
     // Then
     String failedMessage = getLogMessage(1);
 
-    assertThat(failedMessage).contains(ESCAPED_MULTILINE_VALUE);
-    assertThat(failedMessage).doesNotContain(LINE_FEED).doesNotContain(CARRIAGE_RETURN);
+    assertThat(failedMessage).contains(ESCAPED_MULTILINE_VALUE).doesNotContainPattern("[\\r\\n]");
   }
 
   @Test

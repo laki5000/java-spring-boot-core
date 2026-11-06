@@ -36,13 +36,7 @@ class ExceptionHandlingFilterUnitTests {
   void doFilterInternal_shouldPassExceptionToResolver_whenFilterChainThrowsException() {
     // Given
     AtomicReference<Exception> resolvedException = new AtomicReference<>();
-    ExceptionHandlingFilter filter =
-        new ExceptionHandlingFilter(
-            (req, res, handler, ex) -> {
-              resolvedException.set(ex);
-              return new ModelAndView();
-            },
-            new AcceptHeaderLocaleResolver());
+    ExceptionHandlingFilter filter = recordingFilter(resolvedException);
 
     // When
     assertThatCode(() -> filter.doFilter(request, response, throwingFilterChain))
@@ -73,13 +67,7 @@ class ExceptionHandlingFilterUnitTests {
   void doFilterInternal_shouldRethrowExceptionWithoutResolving_whenResponseIsCommitted() {
     // Given
     AtomicReference<Exception> resolvedException = new AtomicReference<>();
-    ExceptionHandlingFilter filter =
-        new ExceptionHandlingFilter(
-            (req, res, handler, ex) -> {
-              resolvedException.set(ex);
-              return new ModelAndView();
-            },
-            new AcceptHeaderLocaleResolver());
+    ExceptionHandlingFilter filter = recordingFilter(resolvedException);
     response.setCommitted(true);
 
     // When
@@ -119,5 +107,14 @@ class ExceptionHandlingFilterUnitTests {
     // Then
     assertThat(contentTypeAtResolution.get()).isNull();
     assertThat(bufferedBytesAtResolution.get()).isEqualTo(0);
+  }
+
+  private ExceptionHandlingFilter recordingFilter(AtomicReference<Exception> resolvedException) {
+    return new ExceptionHandlingFilter(
+        (req, res, handler, ex) -> {
+          resolvedException.set(ex);
+          return new ModelAndView();
+        },
+        new AcceptHeaderLocaleResolver());
   }
 }

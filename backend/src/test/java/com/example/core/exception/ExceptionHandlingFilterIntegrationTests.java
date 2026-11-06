@@ -28,8 +28,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @AutoConfigureMockMvc
 class ExceptionHandlingFilterIntegrationTests {
 
-  private static final String REQUEST_ID_HEADER = "X-Request-Id";
-
   @Autowired private MockMvc mockMvc;
 
   @ParameterizedTest
@@ -47,7 +45,7 @@ class ExceptionHandlingFilterIntegrationTests {
     ResultActions result = mockMvc.perform(request);
 
     // Then
-    String requestId = result.andReturn().getResponse().getHeader(REQUEST_ID_HEADER);
+    String requestId = result.andReturn().getResponse().getHeader("X-Request-Id");
 
     result
         .andExpect(status().isInternalServerError())
