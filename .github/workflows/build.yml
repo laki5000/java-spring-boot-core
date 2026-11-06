@@ -20,7 +20,7 @@ jobs:
 
       - name: Build
         working-directory: backend
-        run: mvn package -DskipTests
+        run: ./mvnw -B package -DskipTests
 
       - name: Upload build output
         uses: actions/upload-artifact@v4

@@ -9,13 +9,16 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>core</artifactId>
+	<artifactId>java-spring-boot-core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
 	<url/>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/license/mit</url>
+		</license>
 	</licenses>
 	<developers>
 		<developer/>
@@ -32,11 +35,6 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
@@ -48,7 +46,19 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit-junit5</artifactId>
+			<version>1.5.1</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -65,6 +75,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 
@@ -73,6 +84,21 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 
 			<plugin>
@@ -102,18 +128,18 @@
 						</goals>
 
 						<configuration>
-							<inputSpec>
-								${project.basedir}/../api/v1/openapi.yml
-							</inputSpec>
+							<inputSpec>${project.basedir}/../api/v1/openapi.yml</inputSpec>
 
 							<generatorName>spring</generatorName>
 
-							<output>
-								${project.build.directory}/generated-sources/openapi
-							</output>
+							<output>${project.build.directory}/generated-sources/openapi</output>
 
 							<apiPackage>com.example.generated.api</apiPackage>
 							<modelPackage>com.example.generated.dto</modelPackage>
+
+							<schemaMappings>
+								<schemaMapping>problem-detail=org.springframework.http.ProblemDetail</schemaMapping>
+							</schemaMappings>
 
 							<configOptions>
 								<interfaceOnly>true</interfaceOnly>
@@ -139,6 +165,16 @@
 			</plugin>
 
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<logging.structured.format.console></logging.structured.format.console>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+
+			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>3.1.0</version>
@@ -148,6 +184,16 @@
 						<googleJavaFormat/>
 					</java>
 				</configuration>
+
+				<executions>
+					<execution>
+						<id>check-format</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -159,13 +205,24 @@
 					<excludes>
 						<exclude>com/example/generated/**</exclude>
 						<exclude>com/example/Application.class</exclude>
-						<exclude>com/example/proj/exception/GlobalExceptionHandler.class</exclude>
 					</excludes>
 				</configuration>
 
 				<executions>
 					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+						<configuration>
+							<destFile>${project.build.directory}/coverage/unit/jacoco.exec</destFile>
+							<append>false</append>
+						</configuration>
+					</execution>
+
+					<execution>
 						<id>merge</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>merge</goal>
 						</goals>
@@ -189,7 +246,19 @@
 					</execution>
 
 					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+						</configuration>
+					</execution>
+
+					<execution>
 						<id>check</id>
+						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
@@ -242,6 +311,23 @@
 						<configuration>
 							<includes>
 								<include>**/*IntegrationTests.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>architecture-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<includes>
+								<include>**/*ArchTests.java</include>
 							</includes>
 						</configuration>
 					</plugin>

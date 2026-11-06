@@ -1,0 +1,23 @@
+name: OpenAPI Lint
+
+on:
+  workflow_call:
+
+jobs:
+  openapi-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Lint OpenAPI specification
+        env:
+          REDOCLY_TELEMETRY: 'off'
+          npm_config_ignore_scripts: 'true'
+        run: npx -y @redocly/cli@2.69.0 lint api/v1/openapi.yml
