@@ -17,7 +17,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../components/schemas/api-response-string.yml'
+            $ref: '../components/schemas/demo-response.yml'
 
     '400':
       $ref: '../components/responses/bad-request.yml'

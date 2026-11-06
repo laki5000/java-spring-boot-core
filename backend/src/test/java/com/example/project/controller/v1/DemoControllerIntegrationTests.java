@@ -20,7 +20,7 @@ class DemoControllerIntegrationTests {
 
   private static final String DEMO_ENDPOINT = "/api/v1/demo";
   private static final String ERROR_PARAMETER = "error";
-  private static final String RESPONSE_DATA_PATH = "$.data";
+  private static final String RESPONSE_MESSAGE_PATH = "$.message";
   private static final String REQUEST_ID_HEADER = "X-Request-Id";
   private static final String EXPECTED_RUNNING_MESSAGE = "Core application is running";
 
@@ -32,7 +32,7 @@ class DemoControllerIntegrationTests {
     mockMvc
         .perform(get(DEMO_ENDPOINT).param(ERROR_PARAMETER, "false"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath(RESPONSE_DATA_PATH).value(EXPECTED_RUNNING_MESSAGE));
+        .andExpect(jsonPath(RESPONSE_MESSAGE_PATH).value(EXPECTED_RUNNING_MESSAGE));
   }
 
   @Test
@@ -41,7 +41,7 @@ class DemoControllerIntegrationTests {
     mockMvc
         .perform(get(DEMO_ENDPOINT))
         .andExpect(status().isOk())
-        .andExpect(jsonPath(RESPONSE_DATA_PATH).value(EXPECTED_RUNNING_MESSAGE));
+        .andExpect(jsonPath(RESPONSE_MESSAGE_PATH).value(EXPECTED_RUNNING_MESSAGE));
   }
 
   @Test
