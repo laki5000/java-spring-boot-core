@@ -4,6 +4,9 @@ spring:
   messages:
     basename: messages/messages
     fallback-to-system-locale: false
+  threads:
+    virtual:
+      enabled: true
 
 logging:
   pattern:
