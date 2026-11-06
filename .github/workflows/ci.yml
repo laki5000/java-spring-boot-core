@@ -19,6 +19,9 @@ jobs:
   spotless:
     uses: ./.github/workflows/spotless.yml
 
+  openapi-lint:
+    uses: ./.github/workflows/openapi-lint.yml
+
   unit-tests:
     needs: build
     uses: ./.github/workflows/unit-tests.yml

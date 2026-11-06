@@ -3,10 +3,15 @@ openapi: 3.0.3
 info:
   title: Java Spring Boot Core API
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:8080
     description: Local
+
+security: []
 
 paths:
   /api/v1/demo:
