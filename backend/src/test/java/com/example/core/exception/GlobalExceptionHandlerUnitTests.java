@@ -33,7 +33,6 @@ class GlobalExceptionHandlerUnitTests {
   private static final String HUNGARIAN_BAD_REQUEST_TITLE = "Hibás kérés";
   private static final String CUSTOM_PROBLEM_TITLE = "Custom problem";
   private static final String MULTILINE_REASON = "Bob\r\nINFO fake log line";
-  private static final String BUSINESS_RULE_MESSAGE = "Business rule violated";
 
   private GlobalExceptionHandler handler;
   private ServletWebRequest webRequest;
@@ -47,6 +46,7 @@ class GlobalExceptionHandlerUnitTests {
     StaticMessageSource messageSource = new StaticMessageSource();
     messageSource.addMessage("error.title.400", HUNGARIAN, HUNGARIAN_BAD_REQUEST_TITLE);
     messageSource.addMessage("error.title.404", HUNGARIAN, "Az erőforrás nem található");
+    messageSource.addMessage("test.businessRule", HUNGARIAN, "Szabálysértés: {0}");
 
     handler = new GlobalExceptionHandler();
     handler.setMessageSource(messageSource);
@@ -198,17 +198,34 @@ class GlobalExceptionHandlerUnitTests {
   }
 
   @Test
-  void handleBusinessException_shouldReturnUnprocessableContentWithMessageAsDetail() {
+  void handleException_shouldReturnLocalizedDetail_whenExceptionIsBusinessException()
+      throws Exception {
     // Given
-    BusinessException exception = new BusinessException(BUSINESS_RULE_MESSAGE) {};
+    LocaleContextHolder.setLocale(HUNGARIAN);
+    BusinessException exception = new BusinessException("test.businessRule", "abc");
 
     // When
-    ResponseEntity<Object> response = handler.handleBusinessException(exception, webRequest);
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
 
     // Then
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
 
     assertThat(problemDetail.getStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT.value());
-    assertThat(problemDetail.getDetail()).isEqualTo(BUSINESS_RULE_MESSAGE);
+    assertThat(problemDetail.getDetail()).isEqualTo("Szabálysértés: abc");
+  }
+
+  @Test
+  void handleException_shouldUseMessageKeyAsDetail_whenBusinessExceptionMessageIsMissing()
+      throws Exception {
+    // Given
+    BusinessException exception = new BusinessException("test.missing");
+
+    // When
+    ResponseEntity<Object> response = handler.handleException(exception, webRequest);
+
+    // Then
+    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
+
+    assertThat(problemDetail.getDetail()).isEqualTo("test.missing");
   }
 }

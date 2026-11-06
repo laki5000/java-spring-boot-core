@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.example.core.exception.BusinessException;
 import com.example.core.message.I18nService;
-import com.example.project.exception.DemoException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ class DemoServiceUnitTests {
   void getDemoMessage_shouldThrowException_whenErrorIsTrue() {
     // When / Then
     assertThatThrownBy(() -> demoService.getDemoMessage(true))
-        .isInstanceOf(DemoException.class)
-        .hasMessage("Demo error was requested");
+        .isInstanceOf(BusinessException.class)
+        .hasMessage("demo.error");
   }
 }

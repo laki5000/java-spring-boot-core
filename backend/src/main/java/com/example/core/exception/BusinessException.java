@@ -1,8 +1,10 @@
 package com.example.core.exception;
 
-public abstract class BusinessException extends RuntimeException {
+import org.springframework.http.HttpStatus;
 
-  protected BusinessException(String message) {
-    super(message);
+public class BusinessException extends ApiException {
+
+  public BusinessException(String messageKey, Object... arguments) {
+    super(HttpStatus.UNPROCESSABLE_CONTENT, messageKey, arguments);
   }
 }

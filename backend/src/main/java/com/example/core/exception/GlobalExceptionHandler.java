@@ -26,16 +26,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
   private static final String TITLE_MESSAGE_PREFIX = "error.title.";
 
-  @ExceptionHandler(BusinessException.class)
-  public ResponseEntity<Object> handleBusinessException(
-      BusinessException exception, WebRequest request) {
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage());
-
-    return handleExceptionInternal(
-        exception, problemDetail, HttpHeaders.EMPTY, HttpStatus.UNPROCESSABLE_CONTENT, request);
-  }
-
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<Object> handleConstraintViolation(
       ConstraintViolationException exception, WebRequest request) {
