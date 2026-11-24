@@ -33,7 +33,6 @@ class GlobalExceptionHandlerUnitTests {
   private static final String HUNGARIAN_BAD_REQUEST_TITLE = "Hibás kérés";
   private static final String CUSTOM_PROBLEM_TITLE = "Custom problem";
   private static final String MULTILINE_REASON = "Bob\r\nINFO fake log line";
-  private static final String REQUEST_PATH = "/api/v1/items";
 
   private GlobalExceptionHandler handler;
   private ServletWebRequest webRequest;
@@ -228,41 +227,5 @@ class GlobalExceptionHandlerUnitTests {
     ProblemDetail problemDetail = (ProblemDetail) response.getBody();
 
     assertThat(problemDetail.getDetail()).isEqualTo("test.missing");
-  }
-
-  @Test
-  void handleException_shouldSetInstanceToRequestUri() throws Exception {
-    // Given
-    ServletWebRequest request =
-        new ServletWebRequest(new MockHttpServletRequest("GET", REQUEST_PATH));
-    ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST);
-
-    // When
-    ResponseEntity<Object> response = handler.handleException(exception, request);
-
-    // Then
-    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
-
-    assertThat(problemDetail.getInstance()).isEqualTo(URI.create(REQUEST_PATH));
-  }
-
-  @Test
-  void handleException_shouldKeepInstance_whenProblemDetailHasInstance() throws Exception {
-    // Given
-    ServletWebRequest request =
-        new ServletWebRequest(new MockHttpServletRequest("GET", REQUEST_PATH));
-    ProblemDetail customProblemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
-    URI customInstance = URI.create("/custom/instance");
-    customProblemDetail.setInstance(customInstance);
-    ErrorResponseException exception =
-        new ErrorResponseException(HttpStatus.NOT_FOUND, customProblemDetail, null);
-
-    // When
-    ResponseEntity<Object> response = handler.handleException(exception, request);
-
-    // Then
-    ProblemDetail problemDetail = (ProblemDetail) response.getBody();
-
-    assertThat(problemDetail.getInstance()).isEqualTo(customInstance);
   }
 }

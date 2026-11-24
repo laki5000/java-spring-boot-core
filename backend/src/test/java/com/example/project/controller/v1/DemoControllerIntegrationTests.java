@@ -64,7 +64,6 @@ class DemoControllerIntegrationTests {
         .andExpect(jsonPath("$.title").value(getMessage("error.title.422")))
         .andExpect(jsonPath("$.status").value(422))
         .andExpect(jsonPath("$.detail").value(getMessage("demo.error")))
-        .andExpect(jsonPath("$.instance").value(DEMO_ENDPOINT))
         .andExpect(header().exists(REQUEST_ID_HEADER))
         .andExpect(jsonPath("$.requestId").value(requestId));
   }

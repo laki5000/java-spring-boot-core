@@ -37,7 +37,7 @@ curl -H 'Accept-Language: hu' 'http://localhost:8080/api/v1/demo?error=true'
 ```
 
 ```json
-{"detail":"A demó hibát kérésre dobtuk","instance":"/api/v1/demo","status":422,"title":"A kérés nem dolgozható fel","requestId":"fb0ed256-1f30-424c-8ff0-e5e9d040960d"}
+{"detail":"A demó hibát kérésre dobtuk","status":422,"title":"A kérés nem dolgozható fel","requestId":"fb0ed256-1f30-424c-8ff0-e5e9d040960d"}
 ```
 
 Check the health of the application (management port):
