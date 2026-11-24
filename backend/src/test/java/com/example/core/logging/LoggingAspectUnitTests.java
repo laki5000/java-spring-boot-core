@@ -1,305 +1,361 @@
 package com.example.core.logging;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.slf4j.event.Level.DEBUG;
-import static org.slf4j.event.Level.INFO;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.reflect.CodeSignature;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.aop.support.AopUtils;
 
-@ExtendWith(MockitoExtension.class)
 class LoggingAspectUnitTests {
 
-  private static final String METHOD_NAME = "testMethod";
   private static final String EXPECTED_RESULT = "result";
-  private static final String EXCEPTION_MESSAGE = "test";
 
   private static final Long ARGUMENT_1 = 1L;
   private static final String ARGUMENT_2 = "test";
   private static final Boolean ARGUMENT_3 = true;
 
-  private static final String ARGUMENT_NAME_1 = "first";
-  private static final String ARGUMENT_NAME_2 = "second";
-  private static final String ARGUMENT_NAME_3 = "third";
-
   private static final String EXPECTED_ARGUMENT_1 = "0=first: 1";
   private static final String EXPECTED_ARGUMENT_2 = "1=second: test";
   private static final String EXPECTED_ARGUMENT_3 = "2=third: true";
-  private static final String REDACTED_ARGUMENT_2 = "1=second: [REDACTED]";
 
-  private static final String STARTED = "LoggingAspectUnitTests.testMethod started";
-  private static final String COMPLETED_PREFIX = "LoggingAspectUnitTests.testMethod completed in ";
+  private static final String MULTILINE_VALUE = "Bob\r\nINFO fake log line";
+  private static final String ESCAPED_MULTILINE_VALUE = "Bob\\r\\nINFO fake log line";
+
   private static final String MILLISECONDS_SUFFIX = " ms";
   private static final String ARGUMENTS_PREFIX = "arguments=";
   private static final String RESULT_PREFIX = "result=";
 
-  @Mock private ProceedingJoinPoint joinPoint;
-
-  @Mock private CodeSignature signature;
-
-  @Mock private LogExecution logExecution;
-
-  private LoggingAspect loggingAspect;
+  private SampleService target;
+  private SampleService sampleService;
 
   private Logger logger;
+  private Level originalLevel;
   private ListAppender<ILoggingEvent> logAppender;
 
   @BeforeEach
   void setUp() {
-    loggingAspect = new LoggingAspect();
+    target = new SampleService();
+    sampleService = createProxy(target);
 
-    logger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
+    logger = (Logger) LoggerFactory.getLogger(LoggingAspectUnitTests.class);
+    originalLevel = logger.getLevel();
     logger.setLevel(Level.DEBUG);
 
     logAppender = new ListAppender<>();
     logAppender.start();
     logger.addAppender(logAppender);
-
-    when(joinPoint.getTarget()).thenReturn(this);
-    when(joinPoint.getSignature()).thenReturn(signature);
-    when(signature.getName()).thenReturn(METHOD_NAME);
   }
 
   @AfterEach
   void tearDown() {
     logger.detachAppender(logAppender);
+    logger.setLevel(originalLevel);
   }
 
   @Test
-  void testLogExecution_shouldReturnResultFromProceed() throws Throwable {
-    // Given
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(false);
-    when(logExecution.logResult()).thenReturn(false);
-
+  void logExecution_shouldReturnResultAndLogStartedAndCompleted() {
     // When
-    Object result = loggingAspect.logExecution(joinPoint, logExecution);
+    Object result = sampleService.plain();
 
     // Then
-    assertEquals(EXPECTED_RESULT, result);
-    verify(joinPoint).proceed();
+    assertThat(result).isEqualTo(EXPECTED_RESULT);
+    assertThat(target.invocations).isEqualTo(1);
 
-    assertEquals(2, logAppender.list.size());
-    assertStartedLog(logAppender.list.getFirst());
-    assertCompletedLog(logAppender.list.getLast());
+    assertThat(logAppender.list).hasSize(2);
+    assertStartedLog(logAppender.list.getFirst(), SampleService.PLAIN);
+    assertCompletedLog(logAppender.list.getLast(), SampleService.PLAIN);
   }
 
   @Test
-  void testLogExecution_shouldPropagateExceptionFromProceed() throws Throwable {
+  void logExecution_shouldNotLog_whenMethodIsNotAnnotated() {
+    // When
+    Object result = sampleService.notAnnotated();
+
+    // Then
+    assertThat(result).isEqualTo(EXPECTED_RESULT);
+    assertThat(logAppender.list).isEmpty();
+  }
+
+  @ParameterizedTest
+  @CsvSource({"DEBUG, DEBUG, 2", "DEBUG, INFO, 0", "INFO, INFO, 2", "INFO, WARN, 0"})
+  void logExecution_shouldLogOnlyWhenAnnotationLevelIsEnabled(
+      LogLevel annotationLevel, String loggerLevel, int expectedLogCount) {
     // Given
-    RuntimeException expectedException = new RuntimeException(EXCEPTION_MESSAGE);
+    Level level = Level.toLevel(loggerLevel, null);
+    assertThat(level).isNotNull();
+    logger.setLevel(level);
 
-    when(joinPoint.proceed()).thenThrow(expectedException);
-    when(logExecution.level()).thenReturn(DEBUG);
+    // When
+    Object result = annotationLevel == LogLevel.INFO ? sampleService.info() : sampleService.plain();
 
-    // When / Then
+    // Then
+    assertThat(result).isEqualTo(EXPECTED_RESULT);
+    assertThat(logAppender.list).hasSize(expectedLogCount);
+    logAppender.list.forEach(
+        event -> assertThat(event.getLevel()).isEqualTo(Level.toLevel(annotationLevel.name())));
+  }
+
+  @Test
+  void logExecution_shouldNotFormatArgumentsAndResult_whenLogLevelIsDisabled() {
+    // Given
+    logger.setLevel(Level.INFO);
+    AtomicInteger toStringCalls = new AtomicInteger();
+    Object countingObject =
+        new Object() {
+          @Override
+          public String toString() {
+            toStringCalls.incrementAndGet();
+            return ARGUMENT_2;
+          }
+        };
+
+    // When
+    Object result = sampleService.echo(ARGUMENT_1, countingObject, ARGUMENT_3);
+
+    // Then
+    assertThat(result).isSameAs(countingObject);
+    assertThat(target.invocations).isEqualTo(1);
+    assertThat(logAppender.list).isEmpty();
+    assertThat(toStringCalls.get()).isEqualTo(0);
+  }
+
+  @Test
+  void logExecution_shouldLogWithTargetClassLogger() {
+    // When
+    sampleService.plain();
+
+    // Then
+    assertThat(logAppender.list.getFirst().getLoggerName())
+        .isEqualTo(SampleService.class.getName());
+  }
+
+  @Test
+  void logExecution_shouldLogFailedAndPropagateException_whenMethodThrows() {
+    // Given
+    RuntimeException expectedException = new RuntimeException("test");
+
+    // When
     RuntimeException actualException =
-        assertThrows(
-            RuntimeException.class, () -> loggingAspect.logExecution(joinPoint, logExecution));
+        catchThrowableOfType(RuntimeException.class, () -> sampleService.fail(expectedException));
 
-    assertEquals(expectedException, actualException);
-    verify(joinPoint).proceed();
+    // Then
+    assertThat(actualException).isSameAs(expectedException);
 
-    assertEquals(1, logAppender.list.size());
-    assertStartedLog(logAppender.list.getFirst());
+    assertThat(logAppender.list).hasSize(2);
+    assertStartedLog(logAppender.list.getFirst(), SampleService.FAIL);
+
+    String failedMessage = getLogMessage(1);
+
+    assertThat(failedMessage).startsWith(SampleService.FAIL + " failed after ");
+    assertThat(failedMessage).contains(MILLISECONDS_SUFFIX);
+    assertThat(failedMessage).contains("exception=" + expectedException);
+    assertThat(logAppender.list.get(1).getLevel()).isEqualTo(Level.DEBUG);
+    assertThat(logAppender.list.get(1).getThrowableProxy()).isNull();
   }
 
   @Test
-  void testLogExecution_shouldLogAllArguments_whenArgumentLoggingIsEnabledAndIndexesAreEmpty()
-      throws Throwable {
-    // Given
-    mockArguments();
-
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[0]);
-    when(logExecution.logResult()).thenReturn(false);
-
+  void logExecution_shouldLogAllArguments_whenArgumentLoggingIsEnabled() {
     // When
-    Object result = loggingAspect.logExecution(joinPoint, logExecution);
+    sampleService.withArguments(ARGUMENT_1, ARGUMENT_2, ARGUMENT_3);
 
     // Then
-    assertEquals(EXPECTED_RESULT, result);
-    verify(joinPoint).proceed();
-
     String startedMessage = getLogMessage(0);
     String completedMessage = getLogMessage(1);
 
-    assertTrue(startedMessage.contains(STARTED));
-    assertTrue(startedMessage.contains(ARGUMENTS_PREFIX));
-    assertTrue(startedMessage.contains(EXPECTED_ARGUMENT_1));
-    assertTrue(startedMessage.contains(EXPECTED_ARGUMENT_2));
-    assertTrue(startedMessage.contains(EXPECTED_ARGUMENT_3));
+    assertThat(startedMessage).contains(ARGUMENTS_PREFIX);
+    assertThat(startedMessage).contains(EXPECTED_ARGUMENT_1);
+    assertThat(startedMessage).contains(EXPECTED_ARGUMENT_2);
+    assertThat(startedMessage).contains(EXPECTED_ARGUMENT_3);
 
-    assertFalse(completedMessage.contains(ARGUMENTS_PREFIX));
-    assertFalse(completedMessage.contains(RESULT_PREFIX));
+    assertThat(completedMessage).doesNotContain(ARGUMENTS_PREFIX);
+    assertThat(completedMessage).doesNotContain(RESULT_PREFIX);
   }
 
   @Test
-  void testLogExecution_shouldLogSelectedArgumentsAndRedactOthers_whenArgumentIndexesAreProvided()
-      throws Throwable {
-    // Given
-    mockArguments();
-
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[] {0, 2});
-    when(logExecution.logResult()).thenReturn(false);
-
+  void logExecution_shouldRedactArgument_whenParameterIsAnnotatedWithRedacted() {
     // When
-    loggingAspect.logExecution(joinPoint, logExecution);
+    sampleService.withRedactedArgument(ARGUMENT_1, ARGUMENT_2, ARGUMENT_3);
 
     // Then
     String message = getLogMessage(0);
 
-    assertTrue(message.contains(EXPECTED_ARGUMENT_1));
-    assertTrue(message.contains(EXPECTED_ARGUMENT_3));
-    assertTrue(message.contains(REDACTED_ARGUMENT_2));
+    assertThat(message).contains(EXPECTED_ARGUMENT_1);
+    assertThat(message).contains(EXPECTED_ARGUMENT_3);
+    assertThat(message).contains("1=second: [REDACTED]");
 
-    assertFalse(message.contains(EXPECTED_ARGUMENT_2));
+    assertThat(message).doesNotContain(EXPECTED_ARGUMENT_2);
   }
 
   @Test
-  void testLogExecution_shouldIgnoreArgumentIndexes_whenArgumentLoggingIsDisabled()
-      throws Throwable {
+  void logExecution_shouldRedactArgument_whenAnnotationIsOnImplementationOfInterfaceMethod() {
     // Given
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(false);
-    when(logExecution.logResult()).thenReturn(false);
+    SampleInterface<String> sampleInterface = createProxy(new SampleImplementation());
+    assertThat(AopUtils.isJdkDynamicProxy(sampleInterface)).isTrue();
 
     // When
-    loggingAspect.logExecution(joinPoint, logExecution);
-
-    // Then
-    String startedMessage = getLogMessage(0);
-    String completedMessage = getLogMessage(1);
-
-    assertFalse(startedMessage.contains(ARGUMENTS_PREFIX));
-    assertFalse(startedMessage.contains(EXPECTED_ARGUMENT_1));
-
-    assertFalse(completedMessage.contains(ARGUMENTS_PREFIX));
-  }
-
-  @Test
-  void testLogExecution_shouldLogResult_whenResultLoggingIsEnabled() throws Throwable {
-    // Given
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(false);
-    when(logExecution.logResult()).thenReturn(true);
-
-    // When
-    loggingAspect.logExecution(joinPoint, logExecution);
-
-    // Then
-    String startedMessage = getLogMessage(0);
-    String completedMessage = getLogMessage(1);
-
-    assertFalse(startedMessage.contains(RESULT_PREFIX));
-    assertTrue(completedMessage.contains(RESULT_PREFIX + EXPECTED_RESULT));
-  }
-
-  @Test
-  void testLogExecution_shouldIgnoreInvalidArgumentIndexes_whenArgumentIndexesAreProvided()
-      throws Throwable {
-    // Given
-    mockArguments();
-
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(true);
-    when(logExecution.argumentIndexes()).thenReturn(new int[] {-1, 0, 99, 2});
-    when(logExecution.logResult()).thenReturn(false);
-
-    // When
-    loggingAspect.logExecution(joinPoint, logExecution);
+    sampleInterface.process(ARGUMENT_2, ARGUMENT_2);
 
     // Then
     String message = getLogMessage(0);
 
-    assertTrue(message.contains(EXPECTED_ARGUMENT_1));
-    assertTrue(message.contains(EXPECTED_ARGUMENT_3));
-    assertTrue(message.contains(REDACTED_ARGUMENT_2));
+    assertThat(message).contains("1=value: [REDACTED]");
+    assertThat(message).doesNotContain("1=value: test");
   }
 
   @Test
-  void testLogExecution_shouldLogAtInfoLevel_whenInfoLevelIsConfigured() throws Throwable {
-    // Given
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(logExecution.level()).thenReturn(INFO);
-    when(logExecution.logArguments()).thenReturn(false);
-    when(logExecution.logResult()).thenReturn(false);
-
+  void logExecution_shouldSanitizeArgumentsAndResult() {
     // When
-    loggingAspect.logExecution(joinPoint, logExecution);
+    sampleService.echo(ARGUMENT_1, MULTILINE_VALUE, ARGUMENT_3);
 
     // Then
-    assertEquals(Level.INFO, logAppender.list.getFirst().getLevel());
-    assertEquals(Level.INFO, logAppender.list.getLast().getLevel());
+    String startedMessage = getLogMessage(0);
+    String completedMessage = getLogMessage(1);
+
+    assertThat(startedMessage)
+        .contains("1=second: " + ESCAPED_MULTILINE_VALUE)
+        .doesNotContainPattern("[\\r\\n]");
+    assertThat(completedMessage)
+        .contains(RESULT_PREFIX + ESCAPED_MULTILINE_VALUE)
+        .doesNotContainPattern("[\\r\\n]");
   }
 
   @Test
-  void testLogExecution_shouldLogAtDebugLevel_whenDebugLevelIsConfigured() throws Throwable {
-    // Given
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(logExecution.level()).thenReturn(DEBUG);
-    when(logExecution.logArguments()).thenReturn(false);
-    when(logExecution.logResult()).thenReturn(false);
-
+  void logExecution_shouldSanitizeException() {
     // When
-    loggingAspect.logExecution(joinPoint, logExecution);
+    assertThatThrownBy(() -> sampleService.fail(new RuntimeException(MULTILINE_VALUE)))
+        .isInstanceOf(RuntimeException.class);
 
     // Then
-    assertEquals(Level.DEBUG, logAppender.list.getFirst().getLevel());
-    assertEquals(Level.DEBUG, logAppender.list.getLast().getLevel());
+    String failedMessage = getLogMessage(1);
+
+    assertThat(failedMessage).contains(ESCAPED_MULTILINE_VALUE).doesNotContainPattern("[\\r\\n]");
   }
 
-  private void mockArguments() throws Throwable {
-    Object[] arguments = {ARGUMENT_1, ARGUMENT_2, ARGUMENT_3};
+  @Test
+  void logExecution_shouldNotLogArguments_whenArgumentLoggingIsDisabled() {
+    // When
+    sampleService.withoutArgumentLogging(ARGUMENT_1);
 
-    when(joinPoint.getArgs()).thenReturn(arguments);
-    when(joinPoint.proceed()).thenReturn(EXPECTED_RESULT);
-    when(signature.getParameterNames())
-        .thenReturn(new String[] {ARGUMENT_NAME_1, ARGUMENT_NAME_2, ARGUMENT_NAME_3});
+    // Then
+    String startedMessage = getLogMessage(0);
+    String completedMessage = getLogMessage(1);
+
+    assertThat(startedMessage).doesNotContain(ARGUMENTS_PREFIX);
+    assertThat(startedMessage).doesNotContain(EXPECTED_ARGUMENT_1);
+
+    assertThat(completedMessage).doesNotContain(ARGUMENTS_PREFIX);
+  }
+
+  @Test
+  void logExecution_shouldLogResult_whenResultLoggingIsEnabled() {
+    // When
+    sampleService.withResult();
+
+    // Then
+    String startedMessage = getLogMessage(0);
+    String completedMessage = getLogMessage(1);
+
+    assertThat(startedMessage).doesNotContain(RESULT_PREFIX);
+    assertThat(completedMessage).contains(RESULT_PREFIX + EXPECTED_RESULT);
+  }
+
+  private static <T> T createProxy(Object target) {
+    AspectJProxyFactory factory = new AspectJProxyFactory(target);
+    factory.addAspect(new LoggingAspect());
+
+    return factory.getProxy();
   }
 
   private String getLogMessage(int index) {
     List<ILoggingEvent> logs = logAppender.list;
 
-    assertFalse(logs.isEmpty());
+    assertThat(logs).isNotEmpty();
 
     return logs.get(index).getFormattedMessage();
   }
 
-  private void assertStartedLog(ILoggingEvent log) {
+  private void assertStartedLog(ILoggingEvent log, String methodName) {
     String message = log.getFormattedMessage();
 
-    assertTrue(message.contains(STARTED));
-    assertFalse(message.contains(RESULT_PREFIX));
+    assertThat(message).startsWith(methodName + " started");
+    assertThat(message).doesNotContain(RESULT_PREFIX);
   }
 
-  private void assertCompletedLog(ILoggingEvent log) {
+  private void assertCompletedLog(ILoggingEvent log, String methodName) {
     String message = log.getFormattedMessage();
 
-    assertTrue(message.contains(COMPLETED_PREFIX));
-    assertTrue(message.contains(MILLISECONDS_SUFFIX));
+    assertThat(message).startsWith(methodName + " completed in ");
+    assertThat(message).contains(MILLISECONDS_SUFFIX);
+  }
+
+  static class SampleService {
+
+    static final String PLAIN = "plain";
+    static final String FAIL = "fail";
+
+    int invocations;
+
+    @LogExecution
+    public Object plain() {
+      invocations++;
+      return EXPECTED_RESULT;
+    }
+
+    @LogExecution(level = LogLevel.INFO)
+    public Object info() {
+      return EXPECTED_RESULT;
+    }
+
+    public Object notAnnotated() {
+      return EXPECTED_RESULT;
+    }
+
+    @LogExecution(logArguments = true)
+    public void withArguments(Long first, String second, Boolean third) {}
+
+    @LogExecution(logArguments = true)
+    public void withRedactedArgument(Long first, @Redacted String second, Boolean third) {}
+
+    @LogExecution
+    public void withoutArgumentLogging(Long first) {}
+
+    @LogExecution(logResult = true)
+    public Object withResult() {
+      return EXPECTED_RESULT;
+    }
+
+    @LogExecution(logArguments = true, logResult = true)
+    public Object echo(Long first, Object second, Boolean third) {
+      invocations++;
+      return second;
+    }
+
+    @LogExecution
+    public void fail(RuntimeException exception) {
+      throw exception;
+    }
+  }
+
+  interface SampleInterface<T> {
+    void process(String name, T value);
+  }
+
+  static class SampleImplementation implements SampleInterface<String> {
+    @Override
+    @LogExecution(logArguments = true)
+    public void process(String name, @Redacted String value) {}
   }
 }

@@ -20,4 +20,4 @@ jobs:
 
       - name: Run Spotless
         working-directory: backend
-        run: mvn spotless:check
+        run: ./mvnw -B spotless:check

@@ -2,7 +2,15 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -11,6 +19,9 @@ jobs:
   spotless:
     uses: ./.github/workflows/spotless.yml
 
+  openapi-lint:
+    uses: ./.github/workflows/openapi-lint.yml
+
   unit-tests:
     needs: build
     uses: ./.github/workflows/unit-tests.yml
@@ -18,6 +29,10 @@ jobs:
   integration-tests:
     needs: build
     uses: ./.github/workflows/integration-tests.yml
+
+  architecture-tests:
+    needs: build
+    uses: ./.github/workflows/architecture-tests.yml
 
   coverage:
     needs:
