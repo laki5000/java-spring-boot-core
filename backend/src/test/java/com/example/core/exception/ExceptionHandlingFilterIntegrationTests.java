@@ -28,6 +28,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @AutoConfigureMockMvc
 class ExceptionHandlingFilterIntegrationTests {
 
+  private static final String THROWING_FILTER_PATH = "/test/throwing-filter";
+
   @Autowired private MockMvc mockMvc;
 
   @ParameterizedTest
@@ -35,7 +37,7 @@ class ExceptionHandlingFilterIntegrationTests {
   void filterException_shouldReturnLocalizedProblemDetailWithRequestId(
       String language, String expectedTitle) throws Exception {
     // Given
-    MockHttpServletRequestBuilder request = get("/test/throwing-filter");
+    MockHttpServletRequestBuilder request = get(THROWING_FILTER_PATH);
 
     if (!language.isEmpty()) {
       request.header(HttpHeaders.ACCEPT_LANGUAGE, language);
@@ -53,6 +55,7 @@ class ExceptionHandlingFilterIntegrationTests {
         .andExpect(jsonPath("$.title").value(expectedTitle))
         .andExpect(jsonPath("$.status").value(500))
         .andExpect(jsonPath("$.detail").doesNotExist())
+        .andExpect(jsonPath("$.instance").value(THROWING_FILTER_PATH))
         .andExpect(jsonPath("$.requestId").value(requestId));
   }
 

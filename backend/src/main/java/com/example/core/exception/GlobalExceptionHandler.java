@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -73,6 +74,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     if (hasDefaultType(problemDetail)) {
       problemDetail.setTitle(getLocalizedTitle(status, problemDetail.getTitle()));
+    }
+
+    if (problemDetail.getInstance() == null
+        && request instanceof ServletWebRequest servletWebRequest) {
+      problemDetail.setInstance(URI.create(servletWebRequest.getRequest().getRequestURI()));
     }
 
     return super.handleExceptionInternal(exception, problemDetail, headers, status, request);
