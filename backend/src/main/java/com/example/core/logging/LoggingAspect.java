@@ -105,15 +105,12 @@ public class LoggingAspect {
         AopUtils.getMostSpecificMethod(signature.getMethod(), targetClass).getParameters();
 
     return IntStream.range(0, arguments.length)
-        .mapToObj(
-            index -> {
-              Object value =
-                  parameters[index].isAnnotationPresent(Redacted.class)
-                      ? REDACTED
-                      : arguments[index];
+        .mapToObj(index -> {
+          Object value =
+              parameters[index].isAnnotationPresent(Redacted.class) ? REDACTED : arguments[index];
 
-              return formatArgument(index, parameters[index].getName(), value);
-            })
+          return formatArgument(index, parameters[index].getName(), value);
+        })
         .collect(Collectors.joining(", ", "{", "}"));
   }
 

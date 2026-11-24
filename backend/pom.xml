@@ -181,7 +181,9 @@
 
 				<configuration>
 					<java>
-						<googleJavaFormat/>
+						<googleJavaFormat>
+							<version>2.0.0</version>
+						</googleJavaFormat>
 					</java>
 				</configuration>
 
