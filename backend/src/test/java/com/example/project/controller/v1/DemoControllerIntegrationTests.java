@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Locale;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -25,6 +27,8 @@ class DemoControllerIntegrationTests {
   private static final String DEMO_ENDPOINT = "/api/v1/demo";
   private static final String ERROR_PARAMETER = "error";
   private static final String REQUEST_ID_HEADER = "X-Request-Id";
+
+  @Autowired private MessageSource messageSource;
 
   @Autowired private MockMvc mockMvc;
 
@@ -43,7 +47,7 @@ class DemoControllerIntegrationTests {
     mockMvc
         .perform(request)
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.message").value("Core application is running"));
+        .andExpect(jsonPath("$.message").value(getMessage("demo.running")));
   }
 
   @Test
@@ -57,11 +61,15 @@ class DemoControllerIntegrationTests {
     result
         .andExpect(status().isUnprocessableContent())
         .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-        .andExpect(jsonPath("$.title").value("Unprocessable Content"))
+        .andExpect(jsonPath("$.title").value(getMessage("error.title.422")))
         .andExpect(jsonPath("$.status").value(422))
-        .andExpect(jsonPath("$.detail").value("Demo error was requested"))
+        .andExpect(jsonPath("$.detail").value(getMessage("demo.error")))
         .andExpect(jsonPath("$.instance").value(DEMO_ENDPOINT))
         .andExpect(header().exists(REQUEST_ID_HEADER))
         .andExpect(jsonPath("$.requestId").value(requestId));
+  }
+
+  private String getMessage(String key) {
+    return messageSource.getMessage(key, null, Locale.ENGLISH);
   }
 }
