@@ -16,6 +16,6 @@ properties:
     type: string
   instance:
     type: string
-    format: uri
+    format: uri-reference
   requestId:
     type: string
